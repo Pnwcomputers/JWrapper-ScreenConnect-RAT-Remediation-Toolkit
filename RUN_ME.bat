@@ -53,10 +53,10 @@ goto :eof
 :CHECK
 echo.
 echo ================================================================
-echo   Launching: Check-System.ps1  (READ-ONLY - no changes made)
+echo   Launching: system_check.ps1  (READ-ONLY - no changes made)
 echo ================================================================
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Check-System.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0system_check.ps1"
 echo.
 echo ================================================================
 echo   Scan complete. A report file has been saved to this folder.
