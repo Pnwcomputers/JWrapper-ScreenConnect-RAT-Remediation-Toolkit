@@ -12,7 +12,7 @@ This specific attack chain is actively utilized by Initial Access Brokers (IABs)
 | File | Description |
 | :--- | :--- |
 | `RUN_ME.bat` | Launcher with admin check and interactive menu. Start here. |
-| `Check-System.ps1` | **Read-only** pre-remediation detection scanner. Run this first. |
+| `system_check.ps1` | **Read-only** pre-remediation detection scanner. Run this first. |
 | `Fix.ps1` | Active remediation script. Removes all known artifacts. |
 | `indicators.md` | Full IOC data sheet (hashes, paths, registry keys, network, TTPs). |
 | `CONTRIBUTE.md` | Guidelines for submitting new IOCs from the field. |
@@ -45,13 +45,13 @@ Most standard removal tools fail against this infection because the RAT register
 HKLM\SYSTEM\CurrentControlSet\Control\SafeBoot\Network\Remote Access Service
 ```
 
-This means that even if you boot the machine into **Safe Mode with Networking** to clean it, the attacker retains full remote access. **Both `Check-System.ps1` and `Fix.ps1` specifically target this key.**
+This means that even if you boot the machine into **Safe Mode with Networking** to clean it, the attacker retains full remote access. **Both `system_check.ps1` and `Fix.ps1` specifically target this key.**
 
 ---
 
 ## 🛠️ Toolkit Overview
 
-### `Check-System.ps1` — Detection Scanner (Read-Only)
+### `system_check.ps1` — Detection Scanner (Read-Only)
 Run this **before** any remediation. It makes zero changes to the system and produces a full timestamped detection report.
 
 Checks 11 categories:
@@ -103,7 +103,7 @@ Option `[2]` requires typing `YES` to confirm before any destructive action runs
 
 **Recommended workflow:**
 
-1. Download `RUN_ME.bat`, `Check-System.ps1`, and `Fix.ps1` to the same folder on the target machine.
+1. Download `RUN_ME.bat`, `system_check.ps1`, and `Fix.ps1` to the same folder on the target machine.
 2. Right-click `RUN_ME.bat` → **Run as administrator**.
 3. Select **[1] CHECK ONLY** and wait for the scan to complete.
 4. Review the report that opens in Notepad. Email it to your technician if requested.
@@ -115,7 +115,7 @@ Option `[2]` requires typing `YES` to confirm before any destructive action runs
 > **You can also run either script directly:**
 > ```powershell
 > # Right-click PowerShell -> Run as Administrator
-> .\Check-System.ps1
+> .\system_check.ps1
 > .\Fix.ps1
 > ```
 
@@ -127,7 +127,7 @@ Both scripts generate timestamped `.txt` report files saved to the same folder a
 
 | Script | Report Filename |
 | :--- | :--- |
-| `Check-System.ps1` | `PNWC_Detection_Report_YYYY-MM-DD_HH-mm-ss.txt` |
+| `system_check.ps1` | `PNWC_Detection_Report_YYYY-MM-DD_HH-mm-ss.txt` |
 | `Fix.ps1` | `PNWC_Remediation_Report_YYYY-MM-DD_HH-mm-ss.txt` |
 
 Each report opens automatically in Notepad at completion and contains:
@@ -144,7 +144,7 @@ Each report opens automatically in Notepad at completion and contains:
 >
 > Because this RAT includes confirmed screen-monitoring (`AllowMonitoring=true`), remote scripting (`AllowScripting=true`), file transfer, and process injection (`CreateRemoteThread`) capabilities, **all passwords typed or saved on the infected machine during the intrusion window must be treated as compromised and rotated immediately after remediation.**
 
-> **Preserve forensic logs before running Fix.ps1** if you intend to involve law enforcement, cyber insurance, or legal counsel. Run `Check-System.ps1` first and retain the detection report as your pre-remediation baseline.
+> **Preserve forensic logs before running Fix.ps1** if you intend to involve law enforcement, cyber insurance, or legal counsel. Run `system_check.ps1` first and retain the detection report as your pre-remediation baseline.
 
 > **Consider a full OS wipe and reload** for high-value or high-risk machines. While this toolkit removes all known artifacts, a SYSTEM-level attacker with 30+ days of dwell time may have installed additional backdoors outside the available log evidence.
 
