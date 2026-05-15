@@ -6,11 +6,7 @@ This repository contains a specialized PowerShell remediation script designed to
 This specific attack chain is frequently utilized by Initial Access Brokers (IABs) and has been heavily associated with the precursors to **Medusa Ransomware** deployments.
 
 ## 🛡️ Indicators of Compromise (IOCs)
-If you are hunting for this on your network, look for the following:
-* **Paths:** * `C:\ProgramData\JWrapper-Remote Access\`
-  * `C:\Windows\SystemTemp\ScreenConnect\`
-* **Services:** `Remote Access Service`
-* **Network:** Connections over port 443 to unfamiliar IPs, or ScreenConnect relays utilizing dynamic DNS (e.g., `anondns.net`).
+* [Indicators.md](./indicators.md) is a community-driven repository of known Indicators of Compromise (IOCs) associated with the dual-channel JWrapper/SimpleHelp and weaponized ScreenConnect intrusion chain, frequently utilized by Initial Access Brokers (IABs) linked to Medusa Ransomware.
 
 ## 🚨 Threat Profile & Attack Chain
 This tool specifically targets an infection chain that utilizes legitimate, abused software to bypass traditional antivirus (AV) and Endpoint Detection and Response (EDR) solutions. 
