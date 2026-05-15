@@ -1,6 +1,6 @@
 # Medusa IAB Variant (JWrapper/ScreenConnect) - Indicators of Compromise (IOC) Data Sheet
 
-This is a community-driven document of known Indicators of Compromise (IOCs) associated with the dual-channel JWrapper/SimpleHelp and weaponized ScreenConnect intrusion chain, frequently utilized by Initial Access Brokers (IABs) linked to Medusa Ransomware. This information is actual data on the files, folders, registry entries, etc found when responding to, or cleaning up an affected network and/or system(s) in the field.
+This is a community-driven document of known Indicators of Compromise (IOCs) associated with the dual-channel JWrapper/SimpleHelp and weaponized ScreenConnect intrusion chain, frequently utilized by Initial Access Brokers (IABs) linked to Medusa Ransomware. This information is actual field data on the files, folders, registry entries, etc found when responding to, or cleaning up an affected network and/or system(s).
 
 *Contributions: Please submit a pull request or issue to add new IOCs observed in the wild.*
 
