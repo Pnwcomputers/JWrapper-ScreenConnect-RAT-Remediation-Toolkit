@@ -1,4 +1,5 @@
-# JWrapper & Weaponized ScreenConnect Remediation Tool (Medusa IAB Variant)
+# JWrapper & Weaponized ScreenConnect Remediation Tool
+## *Medusa IAB Variant*
 
 This repository contains a specialized PowerShell remediation script designed to hunt, disable, and completely remove a highly persistent, dual-channel Remote Access Trojan (RAT) infection. 
 
