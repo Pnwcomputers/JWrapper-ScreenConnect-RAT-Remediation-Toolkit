@@ -8,7 +8,7 @@
     purges all file system artifacts, removes firewall rules, flushes DNS,
     and saves a full timestamped action report with email instructions.
 
-    Run Check-System.ps1 FIRST to document the pre-remediation state.
+    Run system_check.ps1 FIRST to document the pre-remediation state.
 
 .NOTES
     Author  : Pacific Northwest Computers
@@ -292,7 +292,7 @@ if ($Issues -eq 0) {
     Write-Log "  STATUS : All verified indicators removed successfully." "Green"
     Write-Log "  *** REBOOT THIS MACHINE NOW ***" "Yellow"
     Write-Log ""
-    Write-Log "  After rebooting, run Check-System.ps1 to confirm clean." "White"
+    Write-Log "  After rebooting, run system_check.ps1 to confirm clean." "White"
     Write-Log "  Then change ALL passwords used on this machine." "White"
 } else {
     Write-Log "  STATUS : $Issues item(s) could not be removed." "Red"
@@ -401,7 +401,7 @@ REQUIRED NEXT STEPS
 $divider
 
   1. REBOOT this machine immediately
-  2. After reboot, run Check-System.ps1 to verify clean state
+  2. After reboot, run system_check.ps1 to verify clean state
   3. Change ALL passwords used on this machine since March 30, 2026
        Priority: email, banking, QuickBooks, business portals, cloud services
   4. Enable Multi-Factor Authentication (MFA) on all accounts
