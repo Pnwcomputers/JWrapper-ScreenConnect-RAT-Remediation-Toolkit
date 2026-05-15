@@ -1,0 +1,45 @@
+# ── Auto-generated report files ──────────────────────────────────────────────
+# These are created by Check-System.ps1 and Fix.ps1 at runtime.
+# They may contain client-specific system information and should never
+# be committed to the repository.
+PNWC_Detection_Report_*.txt
+PNWC_Remediation_Report_*.txt
+
+# Any other timestamped report output
+*_Report_*.txt
+*_Report_*.log
+
+# ── General log files ─────────────────────────────────────────────────────────
+*.log
+
+# ── Malware samples — NEVER commit these ─────────────────────────────────────
+# Hashes and metadata belong in indicators.md. Binaries do not belong here.
+*.exe
+*.msi
+*.dll
+*.scr
+*.sys
+*.bin
+*.dat
+
+# ── Windows noise ─────────────────────────────────────────────────────────────
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── macOS noise ───────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Editor / IDE files ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.user
+*.code-workspace
+
+# ── Temporary / scratch files ─────────────────────────────────────────────────
+*.tmp
+*.temp
+~$*
