@@ -489,21 +489,21 @@ Get-WinEvent -FilterHashtable @{LogName='Security';Id=4688;StartTime=(Get-Date).
                   -Detail "$($_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss'))  |  Malicious binary in Security audit log" -Sev "HIGH"
     }
 # PowerShell Script Block Logging (4104) - catches VBScript/PS delivery variant
-# Filter is intentionally specific to avoid false-positives from this script running
-# Matches campaign delivery strings that would never appear in legitimate admin tools
+# Filter strings must NOT exist anywhere in this script itself to avoid a match loop
+# where Script Block Logging captures our own code and we flag it as malicious.
 Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-PowerShell/Operational';Id=4104;StartTime=(Get-Date).AddDays(-60)} -ErrorAction SilentlyContinue |
     Where-Object {
         $msg = $_.Message
-        # Match only on campaign-specific payload strings, not generic terms this script uses
-        ($msg -like "*ScreenConnect.ClientSetup.msi*" -and $msg -like "*bumptobabeco*") -or
-        ($msg -like "*FileR.txt*" -and $msg -like "*Add-Type*") -or
-        ($msg -like "*ExclusionExtension*" -and $msg -like "*exe*" -and $msg -like "*Force*") -or
-        ($msg -like "*bumptobabeco.top*")
+        # Only match on strings unique to SILENTCONNECT delivery -- never present in this script
+        ($msg -like "*ClientSetup.msi?e=Access&y=Guest*") -or
+        ($msg -like "*HelloWorld*SayHello*") -or
+        ($msg -like "*C:\\Temp*ScreenConnect.ClientSetup.msi*msiexec*") -or
+        ($msg -like "*drive.google.com*FileR.txt*Add-Type*")
     } |
     Select-Object -First 3 | ForEach-Object {
         $hit = $true
         Write-Hit -Label "Event 4104: SILENTCONNECT Delivery PowerShell Logged" `
-                  -Detail "$($_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss'))  |  Campaign-pattern PowerShell script block captured in Security log" -Sev "CRITICAL"
+                  -Detail "$($_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss'))  |  Campaign delivery PowerShell script block captured in event log" -Sev "CRITICAL"
     }
 if (-not $hit) { Write-Clean "No matching indicators in event logs (last 60 days)" }
 
