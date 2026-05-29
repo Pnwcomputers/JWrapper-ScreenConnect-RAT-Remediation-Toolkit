@@ -2,16 +2,16 @@
 .SYNOPSIS
     Comprehensive Remediation for JWrapper/ScreenConnect Dual-Stage Intrusion.
     Pacific Northwest Computers - Malware Removal Tool
- 
+
 .DESCRIPTION
     Kills malicious processes, removes services, scrubs registry persistence,
     purges all file system artifacts (including ClickOnce cache, VBScript
     delivery files, and SILENTCONNECT staging paths), removes firewall rules,
     flushes DNS, removes the Windows Defender .exe exclusion added by the
     SILENTCONNECT variant, and saves a full timestamped action report.
- 
+
     Run system_check.ps1 FIRST to document the pre-remediation state.
- 
+
 .NOTES
     Author  : Pacific Northwest Computers
     Contact : jon@pnwcomputers.com | 360-624-7379
@@ -20,10 +20,14 @@
               SILENTCONNECT delivery artifacts, Defender exclusion removal,
               new process aliases, updated firewall block list
 #>
- 
+
 #Requires -RunAsAdministrator
+# Set UTF-8 output encoding so box-drawing characters render correctly
+# Works whether launched via RUN_ME.bat (chcp 65001) or directly from PowerShell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 $ErrorActionPreference = "SilentlyContinue"
- 
+
 # ── Setup ─────────────────────────────────────────────────────────────────────
 $Timestamp     = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 $ScriptDir     = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -32,7 +36,7 @@ $ActionLog     = [System.Collections.Generic.List[string]]::new()
 $RemovedItems  = [System.Collections.Generic.List[string]]::new()
 $FailedItems   = [System.Collections.Generic.List[string]]::new()
 $NotFoundItems = [System.Collections.Generic.List[string]]::new()
- 
+
 function Write-Log {
     param([string]$Msg, [string]$Color = "White")
     $entry = "[$(Get-Date -Format 'HH:mm:ss')]  $Msg"
@@ -42,7 +46,7 @@ function Write-Log {
 function Log-Removed  { param([string]$I); $RemovedItems.Add("  [REMOVED]      $I") }
 function Log-Failed   { param([string]$I); $FailedItems.Add("  [FAILED]       $I") }
 function Log-NotFound { param([string]$I); $NotFoundItems.Add("  [NOT FOUND]    $I") }
- 
+
 # Helper: takeown + icacls + Remove-Item with logging
 function Remove-LockedPath {
     param([string]$Path, [string]$Label)
@@ -60,22 +64,7 @@ function Remove-LockedPath {
 }
 
 # ── Banner ────────────────────────────────────────────────────────────────────
-# Ensure console can render box-drawing and block characters
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$host.UI.RawUI.WindowTitle = "PNWC Remediation Tool v2.2"
-
 Clear-Host
-Write-Host ""
-Write-Host "  ██████╗ ███╗   ██╗██╗    ██╗ ██████╗ " -ForegroundColor Cyan
-Write-Host "  ██╔══██╗████╗  ██║██║    ██║██╔════╝ " -ForegroundColor Cyan
-Write-Host "  ██████╔╝██╔██╗ ██║██║ █╗ ██║██║      " -ForegroundColor Cyan
-Write-Host "  ██╔═══╝ ██║╚██╗██║██║███╗██║██║      " -ForegroundColor Cyan
-Write-Host "  ██║     ██║ ╚████║╚███╔███╔╝╚██████╗ " -ForegroundColor Cyan
-Write-Host "  ╚═╝     ╚═╝  ╚═══╝ ╚══╝╚══╝  ╚═════╝ " -ForegroundColor Cyan
-Write-Host ""
-Write-Host "  Pacific Northwest Computers" -ForegroundColor White
-Write-Host "  Malware Remediation Toolkit" -ForegroundColor DarkGray
-Write-Host ""
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
 Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
 Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
@@ -136,8 +125,8 @@ Get-Process -Name "java" -ErrorAction SilentlyContinue |
         Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
         Log-Removed "JWrapper java.exe PID $($_.Id)"
     }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # STEP 2 — REMOVE SERVICES
 # ════════════════════════════════════════════════════════════
@@ -147,7 +136,7 @@ $SvcList = [System.Collections.Generic.List[string]]::new()
 $SvcList.Add("Remote Access Service")
 Get-Service -Name "ScreenConnect Client*" -ErrorAction SilentlyContinue |
     Select-Object -ExpandProperty Name | ForEach-Object { $SvcList.Add($_) }
- 
+
 foreach ($svc in $SvcList) {
     $s = Get-Service -Name $svc -ErrorAction SilentlyContinue
     if ($s) {
@@ -168,8 +157,8 @@ foreach ($svc in $SvcList) {
         Log-NotFound "Service: $svc"
     }
 }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # STEP 3 — REGISTRY PERSISTENCE
 # ════════════════════════════════════════════════════════════
@@ -223,14 +212,14 @@ Get-ScheduledTask -ErrorAction SilentlyContinue |
         Unregister-ScheduledTask -TaskName $_.TaskName -Confirm:$false -ErrorAction SilentlyContinue
         Log-Removed "Scheduled Task: $($_.TaskName)"
     }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # STEP 4 — FILE SYSTEM
 # ════════════════════════════════════════════════════════════
 Write-Log ""
 Write-Log "--- STEP 4: Purging File System Artifacts ---" "Cyan"
- 
+
 # Primary installation directories
 $PrimaryPaths = [System.Collections.Generic.List[string]]::new()
 $PrimaryPaths.Add("$env:ProgramData\JWrapper-Remote Access")
@@ -249,7 +238,7 @@ foreach ($path in $PrimaryPaths) {
         Log-NotFound "Directory: $path"
     }
 }
- 
+
 # ClickOnce cache -- remove ScreenConnect entries per-user (v2.2 addition)
 Write-Log "  [*] Scanning ClickOnce cache for ScreenConnect artifacts..." "Yellow"
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
@@ -272,7 +261,7 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
             }
     }
 }
- 
+
 # SILENTCONNECT variant staging files (v2.2 addition)
 $StagingFiles = @(
     "C:\Windows\Temp\FileR.txt",                          # C# payload staging file
@@ -296,7 +285,7 @@ foreach ($f in $StagingFiles) {
         Log-NotFound "File: $f"
     }
 }
- 
+
 # VBScript delivery files in common locations (v2.2 addition)
 $VbsPatterns = @(
     "$env:USERPROFILE\Downloads\E-INVITE.vbs",
@@ -313,7 +302,7 @@ foreach ($pat in $VbsPatterns) {
         Log-Removed "VBScript lure: $($_.FullName)"
     }
 }
- 
+
 # e-Signature lure files
 foreach ($pat in @(
     "$env:USERPROFILE\Downloads\e-Signature*.exe",
@@ -327,14 +316,14 @@ foreach ($pat in @(
         Log-Removed "Lure file: $($_.FullName)"
     }
 }
- 
+
 # SCR dropper files
 Get-ChildItem "C:\Windows\SystemTemp\" -Filter "*.scr" -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
     Write-Log "  [X] Removing .scr dropper: $($_.FullName)" "Red"
     Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
     Log-Removed "SCR File: $($_.FullName)"
 }
- 
+
 # MMSOFT Design Pulseway staging dir -- only remove if no legitimate Pulseway install present
 $pulsewayInstalled = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue |
     Where-Object { $_.DisplayName -like "*Pulseway*" } | Select-Object -First 1
@@ -346,14 +335,14 @@ if ((Test-Path $pulsewayPath) -and (-not $pulsewayInstalled)) {
     Write-Log "  [--] Pulseway directory found but legitimate Pulseway install detected -- skipping" "DarkGray"
     Log-NotFound "Pulseway staging dir (skipped -- legitimate install present)"
 }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # STEP 5 — FIREWALL RULES
 # ════════════════════════════════════════════════════════════
 Write-Log ""
 Write-Log "--- STEP 5: Removing Malicious Firewall Rules & Adding C2 Blocks ---" "Cyan"
- 
+
 # Remove any firewall rules created by the malware
 Get-NetFirewallRule -ErrorAction SilentlyContinue |
     Where-Object { $_.DisplayName -like "*Remote Access*" -or $_.DisplayName -like "*ScreenConnect*" -or $_.DisplayName -like "*JWrapper*" } |
@@ -362,7 +351,7 @@ Get-NetFirewallRule -ErrorAction SilentlyContinue |
         Remove-NetFirewallRule -DisplayName $_.DisplayName -ErrorAction SilentlyContinue
         Log-Removed "Firewall Rule: $($_.DisplayName)"
     }
- 
+
 # Add outbound block rules for all known C2 IPs
 $C2BlockIPs = @{
     "147.45.218.0"   = "JWrapper C2 primary relay"
@@ -394,8 +383,8 @@ foreach ($ip in $C2BlockIPs.Keys) {
         Write-Log "  [--] Block rule already exists for: $ip" "DarkGray"
     }
 }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # STEP 6 — DNS FLUSH
 # ════════════════════════════════════════════════════════════
@@ -409,8 +398,8 @@ try {
     Write-Log "  [!] DNS flush failed: $($_.Exception.Message)" "Red"
     Log-Failed "DNS Cache flush"
 }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # STEP 7 — WINDOWS DEFENDER EXCLUSION REMOVAL (NEW v2.2)
 # ════════════════════════════════════════════════════════════
@@ -432,8 +421,8 @@ try {
     Write-Log "  [!] Could not check/remove Defender exclusions: $($_.Exception.Message)" "Red"
     Log-Failed "Defender exclusion removal"
 }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # STEP 8 — POST-REMEDIATION VERIFICATION
 # ════════════════════════════════════════════════════════════
@@ -441,7 +430,7 @@ Write-Log ""
 Write-Log "--- STEP 8: Post-Remediation Verification ---" "Cyan"
 $Issues = 0
 $VerifyResults = [System.Collections.Generic.List[string]]::new()
- 
+
 $Checks = @{
     "Service: Remote Access Service"           = { Get-Service "Remote Access Service" -ErrorAction SilentlyContinue }
     "Directory: JWrapper-Remote Access"        = { Test-Path "$env:ProgramData\JWrapper-Remote Access" }
@@ -463,7 +452,7 @@ foreach ($check in $Checks.Keys) {
         $VerifyResults.Add("  [CLEAR]          $check")
     }
 }
- 
+
 # Check if any ClickOnce campaign tokens remain
 $clickOnceClean = $true
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
@@ -483,8 +472,8 @@ if ($clickOnceClean) {
     $VerifyResults.Add("  [CLEAR]          ClickOnce cache (no campaign tokens found)")
     Write-Log "  [OK] Cleared: ClickOnce cache" "Green"
 }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # CONSOLE SUMMARY
 # ════════════════════════════════════════════════════════════
@@ -506,16 +495,16 @@ if ($Issues -eq 0) {
 Write-Log ""
 Write-Log "  Report saved to: $ReportFile" "Cyan"
 Write-Log ("=" * 70) "DarkCyan"
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # SAVE REPORT FILE
 # ════════════════════════════════════════════════════════════
 $statusText = if ($Issues -eq 0) { "ALL DETECTED ITEMS REMOVED -- Reboot required to complete cleanup" }
               else               { "INCOMPLETE -- $Issues item(s) could not be removed, see details below" }
- 
+
 $divider = "=" * 70
- 
+
 $reportContent = @"
 $divider
   PNWC REMEDIATION REPORT
@@ -526,7 +515,7 @@ $divider
   Email       : jon@pnwcomputers.com
   Tool ver    : 2.2
 $divider
- 
+
   ##############################################################
   ##                                                          ##
   ##   PLEASE EMAIL THIS REPORT TO: jon@pnwcomputers.com     ##
@@ -538,7 +527,7 @@ $divider
   ##     Remediation Report - $env:COMPUTERNAME               ##
   ##                                                          ##
   ##############################################################
- 
+
 $divider
 REMEDIATION DETAILS
 $divider
@@ -554,65 +543,65 @@ $divider
   Items failed   : $($FailedItems.Count)
   Not found      : $($NotFoundItems.Count)
 $divider
- 
+
 "@
- 
+
 $reportContent += @"
 $divider
 ITEMS SUCCESSFULLY REMOVED
 $divider
- 
+
 "@
 if ($RemovedItems.Count -gt 0) {
     $reportContent += ($RemovedItems | Out-String)
 } else {
     $reportContent += "  None -- no items matched this run.`n"
 }
- 
+
 $reportContent += @"
- 
+
 $divider
 ITEMS THAT FAILED TO REMOVE  (may need manual attention or reboot)
 $divider
- 
+
 "@
 if ($FailedItems.Count -gt 0) {
     $reportContent += ($FailedItems | Out-String)
 } else {
     $reportContent += "  None -- no removal failures.`n"
 }
- 
+
 $reportContent += @"
- 
+
 $divider
 ITEMS NOT FOUND  (already clean or removed by a prior run)
 $divider
- 
+
 "@
 if ($NotFoundItems.Count -gt 0) {
     $reportContent += ($NotFoundItems | Out-String)
 } else {
     $reportContent += "  None`n"
 }
- 
+
 $reportContent += @"
- 
+
 $divider
 POST-REMEDIATION VERIFICATION RESULTS
 $divider
- 
+
 $($VerifyResults | Out-String)
 $divider
 REQUIRED NEXT STEPS
 $divider
- 
+
   1. REBOOT this machine immediately
   2. After reboot, run system_check.ps1 to verify clean state
   3. Change ALL passwords used on this machine since March 30, 2026
        Priority: email, banking, QuickBooks, business portals, cloud services
   4. Enable Multi-Factor Authentication (MFA) on all accounts
   5. Review bank / financial accounts for unauthorized transactions
- 
+
   BLOCK AT YOUR ROUTER OR FIREWALL (in addition to Windows rules added above):
     # JWrapper C2 relays
     IP: 147.45.218.0
@@ -630,7 +619,7 @@ $divider
     Domain: bumptobabeco.top
     Domain: imansport.ir
     Domain: solpru.com
- 
+
 $divider
 CONTACT PNWC FOR ASSISTANCE
 $divider
@@ -638,13 +627,13 @@ $divider
   Jon Pienkowski -- CompTIA A+ Certified
   Phone : 360-624-7379
   Email : jon@pnwcomputers.com
- 
+
 $divider
 FULL REMEDIATION ACTION LOG
 $divider
- 
+
 $($ActionLog | Out-String)
- 
+
 $divider
   ##############################################################
   ##   PLEASE EMAIL THIS REPORT TO: jon@pnwcomputers.com     ##
@@ -652,7 +641,7 @@ $divider
   ##############################################################
 $divider
 "@
- 
+
 try {
     $reportContent | Out-File -FilePath $ReportFile -Encoding UTF8
     Write-Host ""
@@ -669,4 +658,3 @@ try {
 } catch {
     Write-Host "  [!] Could not save report: $($_.Exception.Message)" -ForegroundColor Red
 }
- 
