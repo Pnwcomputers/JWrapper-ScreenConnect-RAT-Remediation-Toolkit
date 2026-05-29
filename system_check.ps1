@@ -59,19 +59,38 @@ function Write-Hit {
 function Write-Clean { param([string]$L); Write-Log "  [OK] $L" "DarkGreen" }
 
 # ── Banner ────────────────────────────────────────────────────────────────────
+# Ensure console can render box-drawing and block characters
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$host.UI.RawUI.WindowTitle = "PNWC Remediation Tool v2.2"
+
 Clear-Host
-Write-Log ("=" * 70) "DarkCyan"
-Write-Log "   PNWC Detection Checker - JWrapper / ScreenConnect Campaign  " "Cyan"
-Write-Log "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " "Gray"
-Write-Log "   READ-ONLY -- This script makes NO changes to the system     " "Green"
-Write-Log "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " "DarkGray"
-Write-Log ("=" * 70) "DarkCyan"
-Write-Log ""
-Write-Log "  Scan started : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" "Gray"
-Write-Log "  Computer     : $env:COMPUTERNAME" "Gray"
-Write-Log "  Running as   : $([Security.Principal.WindowsIdentity]::GetCurrent().Name)" "Gray"
-Write-Log "  Report file  : $ReportFile" "Gray"
-Write-Log ""
+Write-Host ""
+Write-Host "  ██████╗ ███╗   ██╗██╗    ██╗ ██████╗ " -ForegroundColor Cyan
+Write-Host "  ██╔══██╗████╗  ██║██║    ██║██╔════╝ " -ForegroundColor Cyan
+Write-Host "  ██████╔╝██╔██╗ ██║██║ █╗ ██║██║      " -ForegroundColor Cyan
+Write-Host "  ██╔═══╝ ██║╚██╗██║██║███╗██║██║      " -ForegroundColor Cyan
+Write-Host "  ██║     ██║ ╚████║╚███╔███╔╝╚██████╗ " -ForegroundColor Cyan
+Write-Host "  ╚═╝     ╚═╝  ╚═══╝ ╚══╝╚══╝  ╚═════╝ " -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Pacific Northwest Computers" -ForegroundColor White
+Write-Host "  Malware Remediation Toolkit" -ForegroundColor DarkGray
+Write-Host ""
+Write-Host ("=" * 70) -ForegroundColor DarkCyan
+Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
+Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
+Write-Host "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
+Write-Host ("=" * 70) -ForegroundColor DarkCyan
+Write-Host ""
+Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
+Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
+Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
+Write-Host ""
+$ActionLog.Add("PNWC Remediation Tool v2.2 -- JWrapper/ScreenConnect (SILENTCONNECT)")
+$ActionLog.Add("Started : $(Get-Date)")
+$ActionLog.Add("Computer: $env:COMPUTERNAME")
+$ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
+$ActionLog.Add("Operator: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)")
+$ActionLog.Add(("=" * 70))
 
 
 # ════════════════════════════════════════════════════════════
