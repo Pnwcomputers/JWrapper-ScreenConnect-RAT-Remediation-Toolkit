@@ -16,7 +16,7 @@
 .NOTES
     Author  : Pacific Northwest Computers
     Contact : jon@pnwcomputers.com | 360-624-7379
-    Version : 2.2
+    Version : 2.3
     Updated : May 2026 -- added ClickOnce cache purge, VBScript staging files,
               SILENTCONNECT delivery artifacts, Defender exclusion removal,
               new process aliases, updated firewall block list
@@ -65,24 +65,38 @@ function Remove-LockedPath {
 }
 
 # ── Banner ────────────────────────────────────────────────────────────────────
+# Ensure console can render box-drawing and block characters
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$host.UI.RawUI.WindowTitle = "PNWC Remediation Tool v2.3"
+
 Clear-Host
+Write-Host ""
+Write-Host "  ██████╗ ███╗   ██╗██╗    ██╗ ██████╗ " -ForegroundColor Cyan
+Write-Host "  ██╔══██╗████╗  ██║██║    ██║██╔════╝ " -ForegroundColor Cyan
+Write-Host "  ██████╔╝██╔██╗ ██║██║ █╗ ██║██║      " -ForegroundColor Cyan
+Write-Host "  ██╔═══╝ ██║╚██╗██║██║███╗██║██║      " -ForegroundColor Cyan
+Write-Host "  ██║     ██║ ╚████║╚███╔███╔╝╚██████╗ " -ForegroundColor Cyan
+Write-Host "  ╚═╝     ╚═╝  ╚═══╝ ╚══╝╚══╝  ╚═════╝ " -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Pacific Northwest Computers" -ForegroundColor White
+Write-Host "  Malware Remediation Toolkit" -ForegroundColor DarkGray
+Write-Host ""
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
 Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
 Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
-Write-Host "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
+Write-Host "   v2.3 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
 Write-Host ""
 Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
 Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
 Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
 Write-Host ""
-$ActionLog.Add("PNWC Remediation Tool v2.2 -- JWrapper/ScreenConnect (SILENTCONNECT)")
+$ActionLog.Add("PNWC Remediation Tool v2.3 -- JWrapper/ScreenConnect (SILENTCONNECT)")
 $ActionLog.Add("Started : $(Get-Date)")
 $ActionLog.Add("Computer: $env:COMPUTERNAME")
 $ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
 $ActionLog.Add("Operator: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)")
 $ActionLog.Add(("=" * 70))
-
 
 # ════════════════════════════════════════════════════════════
 # STEP 1 — KILL PROCESSES
@@ -93,7 +107,7 @@ $BadProcs = @(
     "Remote Access Service",        # space-variant alias (confirmed in ETL traces)
     "Remote_Access_Configure",
     "Remote_Access_Launcher",
-    "Remote_AccessWinLauncher",     # JWrapper Windows launcher component (v2.2 addition)
+    "Remote_AccessWinLauncher",     # JWrapper Windows launcher component (v2.3 addition)
     "SimpleService",
     "StopSimpleGatewayService",
     "ScreenConnect.WindowsClient",
@@ -240,7 +254,7 @@ foreach ($path in $PrimaryPaths) {
     }
 }
 
-# ClickOnce cache -- remove ScreenConnect entries per-user (v2.2 addition)
+# ClickOnce cache -- remove ScreenConnect entries per-user (v2.3 addition)
 Write-Log "  [*] Scanning ClickOnce cache for ScreenConnect artifacts..." "Yellow"
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
     $coPath = Join-Path $_.FullName "AppData\Local\Apps\2.0"
@@ -269,7 +283,7 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
     }
 }
 
-# SILENTCONNECT variant staging files (v2.2 addition)
+# SILENTCONNECT variant staging files (v2.3 addition)
 $StagingFiles = @(
     "C:\Windows\Temp\FileR.txt",                          # C# payload staging file
     "C:\Temp\ScreenConnect.ClientSetup.msi",              # MSI staging path
@@ -293,7 +307,7 @@ foreach ($f in $StagingFiles) {
     }
 }
 
-# VBScript delivery files in common locations (v2.2 addition)
+# VBScript delivery files in common locations (v2.3 addition)
 $VbsPatterns = @(
     "$env:USERPROFILE\Downloads\E-INVITE.vbs",
     "$env:USERPROFILE\Downloads\Proposal-*.vbs",
@@ -400,7 +414,7 @@ foreach ($ip in $C2BlockIPs.Keys) {
                 -RemoteAddress $ip `
                 -Protocol Any `
                 -Enabled True `
-                -Description "PNWC Remediation v2.2 -- Block $($C2BlockIPs[$ip])" `
+                -Description "PNWC Remediation v2.3 -- Block $($C2BlockIPs[$ip])" `
                 -ErrorAction Stop | Out-Null
             Write-Log "  [OK] Added outbound block rule for: $ip ($($C2BlockIPs[$ip]))" "Green"
             Log-Removed "Firewall block added for C2 IP: $ip"
@@ -584,7 +598,7 @@ $divider
   Prepared by : Pacific Northwest Computers
   Phone       : 360-624-7379
   Email       : jon@pnwcomputers.com
-  Tool ver    : 2.2
+  Tool ver    : 2.3
 $divider
 
   ##############################################################
