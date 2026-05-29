@@ -39,17 +39,33 @@ function Log-Failed   { param([string]$I); $FailedItems.Add("  [FAILED]       $I
 function Log-NotFound { param([string]$I); $NotFoundItems.Add("  [NOT FOUND]    $I") }
 
 # ── Banner ────────────────────────────────────────────────────────────────────
+# Ensure console can render box-drawing and block characters
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$host.UI.RawUI.WindowTitle = "PNWC Remediation Tool v2.2"
+
 Clear-Host
+Write-Host ""
+Write-Host "  ██████╗ ███╗   ██╗██╗    ██╗ ██████╗ " -ForegroundColor Cyan
+Write-Host "  ██╔══██╗████╗  ██║██║    ██║██╔════╝ " -ForegroundColor Cyan
+Write-Host "  ██████╔╝██╔██╗ ██║██║ █╗ ██║██║      " -ForegroundColor Cyan
+Write-Host "  ██╔═══╝ ██║╚██╗██║██║███╗██║██║      " -ForegroundColor Cyan
+Write-Host "  ██║     ██║ ╚████║╚███╔███╔╝╚██████╗ " -ForegroundColor Cyan
+Write-Host "  ╚═╝     ╚═╝  ╚═══╝ ╚══╝╚══╝  ╚═════╝ " -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Pacific Northwest Computers" -ForegroundColor White
+Write-Host "  Malware Remediation Toolkit" -ForegroundColor DarkGray
+Write-Host ""
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
 Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
 Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
+Write-Host "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
 Write-Host ""
 Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
 Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
 Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
 Write-Host ""
-$ActionLog.Add("PNWC Remediation Tool v2.1 -- JWrapper/ScreenConnect")
+$ActionLog.Add("PNWC Remediation Tool v2.2 -- JWrapper/ScreenConnect (SILENTCONNECT)")
 $ActionLog.Add("Started : $(Get-Date)")
 $ActionLog.Add("Computer: $env:COMPUTERNAME")
 $ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
