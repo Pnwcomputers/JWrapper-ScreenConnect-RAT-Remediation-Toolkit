@@ -15,7 +15,7 @@
 .NOTES
     Author  : Pacific Northwest Computers
     Contact : jon@pnwcomputers.com | 360-624-7379
-    Version : 2.2
+    Version : 2.3
     Updated : May 2026 -- added cross-victim C2 IPs, ClickOnce cache
               detection, VBScript delivery artifacts, app.config/user.config
               C2 confirmation, MMSOFT Pulseway staging dir, new process aliases
@@ -68,7 +68,7 @@ Write-Log ("=" * 70) "DarkCyan"
 Write-Log "   PNWC Detection Checker - JWrapper / ScreenConnect Campaign  " "Cyan"
 Write-Log "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " "Gray"
 Write-Log "   READ-ONLY -- This script makes NO changes to the system     " "Green"
-Write-Log "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " "DarkGray"
+Write-Log "   v2.3 -- SILENTCONNECT / Medusa IAB variant                  " "DarkGray"
 Write-Log ("=" * 70) "DarkCyan"
 Write-Log ""
 Write-Log "  Scan started : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" "Gray"
@@ -621,9 +621,9 @@ if (-not $hit) { Write-Clean "No files matching known campaign hashes found" }
 
 
 # ════════════════════════════════════════════════════════════
-# 12. ADDITIONAL CAMPAIGN-SPECIFIC INDICATORS (NEW v2.2)
+# 12. ADDITIONAL CAMPAIGN-SPECIFIC INDICATORS (NEW v2.3)
 # ════════════════════════════════════════════════════════════
-Write-Section "12. ADDITIONAL CAMPAIGN INDICATORS (v2.2)"
+Write-Section "12. ADDITIONAL CAMPAIGN INDICATORS (v2.3)"
 $hit = $false
 
 # ClickOnce user.config with cross-victim C2 relay token (assembly token shared across all April 2026 victims)
@@ -732,7 +732,7 @@ $divider
   Prepared by : Pacific Northwest Computers
   Phone       : 360-624-7379
   Email       : jon@pnwcomputers.com
-  Tool ver    : 2.2
+  Tool ver    : 2.3
 $divider
 
   ##############################################################
