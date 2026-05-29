@@ -5,7 +5,7 @@ This repository contains a specialized PowerShell toolkit designed to **detect, 
 
 This specific attack chain is actively utilized by Initial Access Brokers (IABs) and has been heavily associated with the precursors to **Medusa Ransomware** deployments. All IOCs, hashes, and behavioral signatures in this repository are sourced from real field incident response data collected across multiple confirmed victims in SW Washington and the Portland, OR metro area between **March 31 and early May 2026**.
 
-> **⚠️ Active Campaign Alert:** As of May 2026, this infection chain is confirmed active across residential and SMB targets in the Pacific Northwest. Multiple victims share identical C2 infrastructure, confirming a coordinated mass-phishing campaign. This campaign has been independently designated **SILENTCONNECT** by Elastic Security Labs (March 2026) and is tracked by Microsoft as a precursor to ransomware deployment.
+> **⚠️ Active Campaign Alert:** As of May 2026, this infection chain is confirmed active across residential and SMB targets in the Pacific Northwest. Multiple victims share identical C2 infrastructure, confirming a coordinated mass-phishing campaign. This campaign has been independently designated **SILENTCONNECT** by Elastic Security Labs (March 2026) and is tracked by Microsoft as a precursor to ransomware deployment. Field IOCs published on OTX: [pulse/6a18e9c64ab0a08568d345cd](https://otx.alienvault.com/pulse/6a18e9c64ab0a08568d345cd)
 
 ---
 
@@ -185,6 +185,9 @@ Each report opens automatically in Notepad at completion and contains:
 15.204.131.77         (instance-sis2tc relay — April 2026 campaign wave)
 147.28.146.148        (instance-fc5xev relay — 2024 campaign wave, same actor)
 
+# SILENTCONNECT delivery infrastructure (Elastic Security Labs + OTX corroborated)
+86.38.225.59          (bumptobabeco.top resolved IP — Lithuania, AS398465 rackdog llc)
+
 # Dynamic DNS C2
 gqpplgq2g.anondns.net    (ScreenConnect C2 relay — original documented case)
 instance-sis2tc-relay.screenconnect.com
@@ -192,6 +195,8 @@ instance-fc5xev-relay.screenconnect.com
 
 # Known SILENTCONNECT campaign domains (Elastic Security Labs, March 2026)
 bumptobabeco[.]top
+imansport[.]ir
+solpru[.]com
 ```
 
 ---
@@ -212,6 +217,7 @@ This campaign has been independently documented by multiple threat intelligence 
 | Microsoft Security Blog | March 3, 2026 | Signed malware / TrustConnect RMM variant |
 | Microsoft Security Blog | May 26, 2026 | ScreenConnect / cryptojacking ScreenConnect abuse |
 | BleepingComputer / G DATA | June 25, 2025 | Authenticode stuffing / EvilConwi |
+| OTX AlienVault (pnwcomputers) | May 2026 | [JWrapper/ScreenConnect Dual-Stage RAT — SILENTCONNECT / Medusa IAB Variant](https://otx.alienvault.com/pulse/6a18e9c64ab0a08568d345cd) |
 
 The SILENTCONNECT designation from Elastic Security Labs most closely matches the VBScript-delivered variant of this campaign. The NSIS-based e-signature lure variant documented here shares payload infrastructure (`instance-sis2tc-relay.screenconnect.com`, `15.204.131.77`) and behavioral TTPs with the broader SILENTCONNECT campaign family.
 
