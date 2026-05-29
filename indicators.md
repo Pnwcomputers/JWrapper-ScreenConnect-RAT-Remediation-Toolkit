@@ -156,11 +156,45 @@ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remote Access
 
 ### Stage 1 — ScreenConnect Relay Servers
 
-| Address / Hostname | Resolved IP | Port | Campaign Wave | Notes |
+| Address / Hostname | Resolved IP(s) | Port | Campaign Wave | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77` | `8041` | April 2026 | **Primary active C2 — confirmed cross-victim** |
-| `instance-fc5xev-relay.screenconnect.com` | `147.28.146.148` | `8041` | April 2024 | Earlier campaign wave — same actor or affiliate |
+| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77` | `8041` | April 2026 | **Cross-victim confirmed — multiple victims 2 hrs apart** |
+| `instance-fc5xev-relay.screenconnect.com` | `147.28.146.148` | `8041` | 2024 | Earlier campaign wave |
 | `gqpplgq2g.anondns.net` | Dynamic | `8041` | March–April 2026 | Anonymous dynamic DNS — original documented case |
+| `instance-zayrhg-relay.screenconnect.com` | See table below | `8041` | 2023–2026 | Long-running relay — 3+ year persistence on one network |
+| `instance-c7gab0-relay.screenconnect.com` | See table below | `8041` | 2023–2025 | Secondary relay — ran concurrently with instance-zayrhg |
+| `instance-xbirmk-relay.screenconnect.com` | See table below | `8041` | 2023–2024 | Earliest observed relay — initial access vector |
+
+#### instance-zayrhg IP Rotation History (field-confirmed)
+
+| IP | Date Observed |
+| :--- | :--- |
+| `139.178.68.80` | May 2023 |
+| `139.178.89.196` | Nov 2024 |
+| `139.178.91.96` | May 2025 |
+| `147.75.70.32` | Dec 2024 |
+| `15.204.48.24` | Mar–Aug 2026 |
+| `15.204.48.31` | Dec 2025 |
+| `15.204.48.34` | Jan 2026 |
+| `15.204.43.162` | Apr–May 2026 |
+
+#### instance-c7gab0 IP Rotation History (field-confirmed)
+
+| IP | Date Observed |
+| :--- | :--- |
+| `147.75.70.188` | Mar 2023 |
+| `139.178.69.0` | Aug 2023 |
+| `147.75.70.116` | Jul 2024 |
+| `147.75.70.28` | Feb 2025 |
+| `15.204.43.236` | Oct 2025 |
+
+#### instance-xbirmk IP Rotation History (field-confirmed)
+
+| IP | Date Observed |
+| :--- | :--- |
+| `139.178.89.208` | Jan 2023 (earliest observed) |
+| `139.178.89.96` | Oct 2023 |
+| `139.178.89.228` | Sep 2024 |
 
 > **Cross-victim attribution:** `15.204.131.77` (instance-sis2tc) is confirmed in the `user.config` HostToAddressMap of at least two independent victims, with connection timestamps 2 hours apart on April 29, 2026. This is direct evidence of a coordinated campaign, not coincidence.
 
@@ -276,12 +310,15 @@ SG_3243431771723114121
 9F6D305069D23FF1265FA557A597E0CF5EBAE0BEA0EE1BA49A0546E15B809263EB5C0C6AFF2D08B8C9208BDB03B2EDD0A58915D052F76CD9C6B399C414471997
 ```
 
-### ScreenConnect Assembly Token (directory name fragment — identifies this specific payload build)
+### ScreenConnect Assembly Tokens (ClickOnce cache directory fragments — identify payload builds)
 
-```
-27fa83f1ad328157    (present in ClickOnce cache directory names across all April 2026 victims)
-420d02d3849b7992    (Core/Windows DLL token — same across all April 2026 victims)
-```
+| Token | Payload Version | Notes |
+| :--- | :--- | :--- |
+| `27fa83f1ad328157` | v25.2.4.9229 / v25.x | April 2026 campaign wave — present across all confirmed 2026 victims |
+| `420d02d3849b7992` | v25.2.4.9229 / v25.x | Core/Windows DLL token — same build as above |
+| `1eba6b14258ee2ac` | v19.x (2025 payload) | Server and workstations — 2025 upgrade wave |
+| `25b0fbb6ef7eb094` | v17.x–v18.x | Early campaign payload — 2021–2024 |
+| `b15b0581876c57b7` | v15.x | Oldest observed payload — 2021–2022 |
 
 ### JWrapper Package Versions
 
@@ -289,7 +326,8 @@ SG_3243431771723114121
 JWrapper core:          00118607049
 Remote Access bundle:   00118607124  (SimpleHelp v5.5.14)
 Windows JRE:            00118596800  (JRE 21.0.8)
-ScreenConnect version:  25.2.4.9229
+ScreenConnect version:  25.2.4.9229  (original documented cases)
+ScreenConnect version:  25.4.25.9314 (newer variant -- MSI recovered from field, SHA256 pending)
 ```
 
 ### Package Hash Sentinel Files (zero-byte, named by SHA-256)
@@ -379,6 +417,8 @@ The following processes were observed on infected machines but are **legitimate 
 
 ## 📅 Confirmed Victim Timeline (Field Data — SW Washington / Portland Metro)
 
+### Individual Victims (Mass Phishing Campaign)
+
 | Date | Event |
 | :--- | :--- |
 | April 8, 2024 | Victim "Enver" — first infection, `instance-fc5xev` / `147.28.146.148` |
@@ -388,6 +428,28 @@ The following processes were observed on infected machines but are **legitimate 
 | April 29, 2026 20:15 UTC | Victim "Enver" — re-infected / upgraded to current payload (`instance-sis2tc` / `15.204.131.77`) |
 | April 29, 2026 22:18 UTC | Victim "Emina" — infected with identical payload, same C2 relay, ~2 hours later |
 | May 2026 | 4+ additional victims identified in same geographic area; campaign confirmed active |
+
+### Business Network — Multi-Machine Long-Term Compromise
+
+One confirmed business in SW Washington / Portland metro area shows continuous compromise across server and multiple workstations spanning over 3 years. Windows Defender was active throughout and detected nothing.
+
+| Date | Machine | Event |
+| :--- | :--- | :--- |
+| Jan 19, 2023 | Workstation | Earliest observed infection — `instance-xbirmk` / `139.178.89.208` |
+| Mar 28, 2023 | **Server** | Server infected — `instance-zayrhg` + `instance-c7gab0` simultaneously |
+| May 23, 2023 | Server | Payload updated on server |
+| Oct 25, 2023 | FR workstation | Infected — `instance-xbirmk` / `139.178.89.96` |
+| Aug 29, 2024 | FR workstation | Payload upgraded |
+| Sep 27, 2024 | FL workstation | Infected — `instance-xbirmk` / `139.178.89.228` |
+| Feb 10, 2025 | FL workstation | `instance-c7gab0` added as second relay |
+| Aug 11, 2025 | Server | Payload upgraded to assembly token `1eba6b14258ee2ac` |
+| Aug 28, 2025 | FL workstation | Upgraded to assembly token `1eba6b14258ee2ac` |
+| Oct 16, 2025 | FR workstation | Campaign token `27fa83f1ad328157` deployed |
+| Dec 15, 2025 | FL workstation | Campaign token `27fa83f1ad328157` deployed |
+| Jan 12, 2026 | FL workstation | Payload updated — `instance-zayrhg` / `15.204.48.34` |
+| Apr 16, 2026 | FR workstation | Latest connection — `instance-zayrhg` / `15.204.43.162` |
+| May 5, 2026 | Admin PC | Updated — `instance-zayrhg` / `15.204.43.162` |
+| May 29, 2026 | MANAGER PC | Discovered during incident response — Fix.ps1 deployed |
 
 ---
 
