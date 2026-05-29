@@ -1,9 +1,11 @@
 # JWrapper & ScreenConnect Remediation Toolkit
-## *(Medusa IAB Variant)*
+## *(Medusa IAB Variant — SILENTCONNECT Campaign)*
 
 This repository contains a specialized PowerShell toolkit designed to **detect, document, and completely remove** a highly persistent, dual-channel Remote Access Trojan (RAT) infection built on abused legitimate remote access software.
 
-This specific attack chain is actively utilized by Initial Access Brokers (IABs) and has been heavily associated with the precursors to **Medusa Ransomware** deployments. All IOCs, hashes, and behavioral signatures in this repository are sourced from real field incident response data.
+This specific attack chain is actively utilized by Initial Access Brokers (IABs) and has been heavily associated with the precursors to **Medusa Ransomware** deployments. All IOCs, hashes, and behavioral signatures in this repository are sourced from real field incident response data collected across multiple confirmed victims in SW Washington and the Portland, OR metro area between **March 31 and early May 2026**.
+
+> **⚠️ Active Campaign Alert:** As of May 2026, this infection chain is confirmed active across residential and SMB targets in the Pacific Northwest. Multiple victims share identical C2 infrastructure, confirming a coordinated mass-phishing campaign. This campaign has been independently designated **SILENTCONNECT** by Elastic Security Labs (March 2026) and is tracked by Microsoft as a precursor to ransomware deployment.
 
 ---
 
@@ -25,9 +27,12 @@ This toolkit targets an infection chain that weaponizes **legitimate, digitally 
 
 The attack follows this progression:
 
-1. **Initial Access:** User executes a fake e-signature lure — typically an NSIS installer named `e-Signature-Key_Access_ID-[ID].exe` — bearing a valid DigiCert Authenticode certificate. Windows displays a trusted (blue) UAC prompt. No AV alert fires.
+1. **Initial Access — Phishing Lure:** User receives a phishing email and is directed to a Cloudflare Turnstile CAPTCHA page. After passing the CAPTCHA, a malicious file is downloaded. Observed lure types include:
+   - NSIS installer: `e-Signature-Key_Access_ID-[ID].exe` — bearing a valid DigiCert Authenticode certificate, producing a trusted (blue) UAC prompt
+   - VBScript files: `E-INVITE.vbs`, `Proposal-03-2026.vbs`, and similar names
+   - Both variants ultimately deliver the same ScreenConnect payload via PowerShell or direct execution
 
-2. **Stage 1 — ScreenConnect (Immediate Access):** The installer silently drops and installs a weaponized ConnectWise ScreenConnect client (`rq.msi` + `rqe.exe`). All 13 user-facing notification settings are explicitly pre-disabled — no tray icon, no connection banner, no user alert of any kind. The client beacons to the attacker's relay via anonymous dynamic DNS (`gqpplgq2g.anondns.net:8041`).
+2. **Stage 1 — ScreenConnect (Immediate Silent Access):** The installer silently drops and installs a weaponized ConnectWise ScreenConnect client (`rq.msi` + `rqe.exe`). All 13 user-facing notification settings are explicitly pre-disabled — no tray icon, no connection banner, no user alert of any kind. The client beacons to the attacker's relay.
 
 3. **Stage 2 — JWrapper/SimpleHelp RAT (Persistent Backdoor):** Using the live ScreenConnect session, the attacker deploys a second-stage persistent backdoor packaged via JWrapper (`officeSH26_working_verf.scr`) that installs SimpleHelp v5.5.14 as a SYSTEM-level Windows service. This provides screen monitoring, remote scripting, file transfer, and process injection capabilities with zero user notification.
 
@@ -49,6 +54,22 @@ This means that even if you boot the machine into **Safe Mode with Networking** 
 
 ---
 
+## 🔗 Multi-Victim Campaign Attribution
+
+Field data collected across 6+ confirmed victims in SW Washington / Portland metro area reveals shared C2 infrastructure, confirming a single coordinated campaign:
+
+| Relay Instance | Resolved IP | Victims | Connection Window |
+| :--- | :--- | :--- | :--- |
+| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77` | Multiple (confirmed cross-victim) | April 29, 2026 |
+| `instance-fc5xev-relay.screenconnect.com` | `147.28.146.148` | Enver (re-infected victim) | April 8, 2024 |
+| `gqpplgq2g.anondns.net` | Dynamic | Original documented case | March–April 2026 |
+
+The April 2026 wave shows two confirmed victims connecting to the **same C2 relay server 2 hours apart on the same date**, consistent with a threat actor working through a phishing blast victim list sequentially.
+
+The `instance-fc5xev` / `147.28.146.148` relay represents an **earlier campaign wave** (2024), suggesting the same threat actor or affiliate network has been operating this infrastructure for over two years with periodic payload updates.
+
+---
+
 ## 🛠️ Toolkit Overview
 
 ### `system_check.ps1` — Detection Scanner (Read-Only)
@@ -65,7 +86,7 @@ Checks 11 categories:
 - ScreenConnect-specific artifacts including `system.config` and `app.config`
 - Windows Event Log indicators (Event IDs 7045, 4688, 4104)
 - Installed programs in Add/Remove Programs registry
-- SHA256 hash matching against all 7 known campaign files
+- SHA256 hash matching against all known campaign files
 
 At completion, the script saves a formatted report to the script directory and **auto-opens it in Notepad**, with clear instructions to email findings to the investigating technician.
 
@@ -148,15 +169,29 @@ Each report opens automatically in Notepad at completion and contains:
 
 > **Consider a full OS wipe and reload** for high-value or high-risk machines. While this toolkit removes all known artifacts, a SYSTEM-level attacker with 30+ days of dwell time may have installed additional backdoors outside the available log evidence.
 
+> **QuickBooks and Outlook users — treat all credentials as compromised.** Field evidence confirms this RAT has been present on machines running QuickBooks (QBW.EXE) and Microsoft Outlook simultaneously. Assume financial data, saved credentials, and email history were accessible to the attacker during the dwell window. Notify your bank and rotate all business account credentials immediately.
+
 ---
 
 ## 🌐 Block These at Your Firewall / Router
 
 ```
-147.45.218.0       (JWrapper C2 - primary)
-91.215.85.219      (JWrapper C2 - redundant)
-147.45.218.13      (JWrapper C2 - redundant)
-gqpplgq2g.anondns.net   (ScreenConnect C2 relay)
+# JWrapper C2 — Stage 2 RAT relays
+147.45.218.0          (JWrapper C2 - primary)
+91.215.85.219         (JWrapper C2 - redundant)
+147.45.218.13         (JWrapper C2 - redundant)
+
+# ScreenConnect C2 — Stage 1 relays (field-confirmed)
+15.204.131.77         (instance-sis2tc relay — April 2026 campaign wave)
+147.28.146.148        (instance-fc5xev relay — 2024 campaign wave, same actor)
+
+# Dynamic DNS C2
+gqpplgq2g.anondns.net    (ScreenConnect C2 relay — original documented case)
+instance-sis2tc-relay.screenconnect.com
+instance-fc5xev-relay.screenconnect.com
+
+# Known SILENTCONNECT campaign domains (Elastic Security Labs, March 2026)
+bumptobabeco[.]top
 ```
 
 ---
@@ -164,6 +199,21 @@ gqpplgq2g.anondns.net   (ScreenConnect C2 relay)
 ## 🛡️ Indicators of Compromise
 
 See [indicators.md](./indicators.md) for the complete, field-sourced IOC data sheet including file hashes, registry keys, network infrastructure, campaign identifiers, and behavioral TTPs.
+
+---
+
+## 📚 External Research & Attribution
+
+This campaign has been independently documented by multiple threat intelligence organizations:
+
+| Source | Publication | Campaign Name |
+| :--- | :--- | :--- |
+| Elastic Security Labs | March 19, 2026 | SILENTCONNECT |
+| Microsoft Security Blog | March 3, 2026 | Signed malware / TrustConnect RMM variant |
+| Microsoft Security Blog | May 26, 2026 | ScreenConnect / cryptojacking ScreenConnect abuse |
+| BleepingComputer / G DATA | June 25, 2025 | Authenticode stuffing / EvilConwi |
+
+The SILENTCONNECT designation from Elastic Security Labs most closely matches the VBScript-delivered variant of this campaign. The NSIS-based e-signature lure variant documented here shares payload infrastructure (`instance-sis2tc-relay.screenconnect.com`, `15.204.131.77`) and behavioral TTPs with the broader SILENTCONNECT campaign family.
 
 ---
 
@@ -175,3 +225,4 @@ This toolkit is provided as-is under the MIT License, without warranty of any ki
 
 *Pacific Northwest Computers — Vancouver, WA*
 *jon@pnwcomputers.com | 360-624-7379*
+*Last updated: May 2026 — reflects multi-victim field data*
