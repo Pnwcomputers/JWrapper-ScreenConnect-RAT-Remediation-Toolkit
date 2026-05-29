@@ -497,7 +497,6 @@ Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-PowerShell/Operationa
         # Only match on strings unique to SILENTCONNECT delivery -- never present in this script
         ($msg -like "*ClientSetup.msi?e=Access&y=Guest*") -or
         ($msg -like "*HelloWorld*SayHello*") -or
-        ($msg -like "*C:\\Temp*ScreenConnect.ClientSetup.msi*msiexec*") -or
         ($msg -like "*drive.google.com*FileR.txt*Add-Type*")
     } |
     Select-Object -First 3 | ForEach-Object {
