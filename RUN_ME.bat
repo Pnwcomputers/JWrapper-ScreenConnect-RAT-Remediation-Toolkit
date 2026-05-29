@@ -61,7 +61,7 @@ echo ================================================================
 echo   Launching: system_check.ps1  (READ-ONLY - no changes made)
 echo ================================================================
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & '%~dp0system_check.ps1' }"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0system_check.ps1"
 echo.
 echo ================================================================
 echo   Scan complete. A report file has been saved to this folder.
@@ -93,7 +93,7 @@ color 0C
 echo.
 echo [*] Launching Fix.ps1...
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & '%~dp0Fix.ps1' }"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Fix.ps1"
 echo.
 echo ================================================================
 echo   Remediation complete. A report file has been saved.
