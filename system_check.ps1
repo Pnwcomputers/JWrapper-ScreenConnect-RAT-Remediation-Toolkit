@@ -61,7 +61,7 @@ function Write-Clean { param([string]$L); Write-Log "  [OK] $L" "DarkGreen" }
 # ── Banner ────────────────────────────────────────────────────────────────────
 # Ensure console can render box-drawing and block characters
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$host.UI.RawUI.WindowTitle = "PNWC Remediation Tool v2.2"
+$host.UI.RawUI.WindowTitle = "PNWC Intrusion Detection Checker v2.2"
 
 Clear-Host
 Write-Host ""
@@ -73,7 +73,7 @@ Write-Host "  ██║     ██║ ╚████║╚███╔███
 Write-Host "  ╚═╝     ╚═╝  ╚═══╝ ╚══╝╚══╝  ╚═════╝ " -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Pacific Northwest Computers" -ForegroundColor White
-Write-Host "  Malware Remediation Toolkit" -ForegroundColor DarkGray
+Write-Host "  Intrusion Detection Checker" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
 Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
