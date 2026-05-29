@@ -488,22 +488,12 @@ Get-WinEvent -FilterHashtable @{LogName='Security';Id=4688;StartTime=(Get-Date).
         Write-Hit -Label "Event 4688: Malicious Process Creation" `
                   -Detail "$($_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss'))  |  Malicious binary in Security audit log" -Sev "HIGH"
     }
-# PowerShell Script Block Logging (4104) - catches VBScript/PS delivery variant
-# Filter strings must NOT exist anywhere in this script itself to avoid a match loop
-# where Script Block Logging captures our own code and we flag it as malicious.
-Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-PowerShell/Operational';Id=4104;StartTime=(Get-Date).AddDays(-60)} -ErrorAction SilentlyContinue |
-    Where-Object {
-        $msg = $_.Message
-        # Only match on strings unique to SILENTCONNECT delivery -- never present in this script
-        ($msg -like "*ClientSetup.msi?e=Access&y=Guest*") -or
-        ($msg -like "*HelloWorld*SayHello*") -or
-        ($msg -like "*drive.google.com*FileR.txt*Add-Type*")
-    } |
-    Select-Object -First 3 | ForEach-Object {
-        $hit = $true
-        Write-Hit -Label "Event 4104: SILENTCONNECT Delivery PowerShell Logged" `
-                  -Detail "$($_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss'))  |  Campaign delivery PowerShell script block captured in event log" -Sev "CRITICAL"
-    }
+# PowerShell Script Block Logging (4104) -- check omitted intentionally.
+# Any filter pattern specific enough to match SILENTCONNECT delivery also appears
+# in this script's own IOC strings, causing Script Block Logging to match our own
+# code. On a genuine victim machine, use Event Viewer to manually review
+# Microsoft-Windows-PowerShell/Operational for Event ID 4104 entries dated
+# before your response, looking for bumptobabeco.top or ScreenConnect MSI downloads.
 if (-not $hit) { Write-Clean "No matching indicators in event logs (last 60 days)" }
 
 
