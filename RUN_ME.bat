@@ -1,5 +1,9 @@
 @echo off
+:: Set UTF-8 codepage so PowerShell Unicode box-drawing characters render correctly
+chcp 65001 >nul 2>&1
 color 0B
+title PNWC Intrusion Response Toolkit v2.2
+
 echo ================================================================
 echo   PNWC Intrusion Response Toolkit
 echo   JWrapper / ScreenConnect Campaign
@@ -26,6 +30,7 @@ if %errorLevel% == 0 (
 )
 
 :: Menu
+:MENU
 echo ================================================================
 echo   Select an option:
 echo.
@@ -46,8 +51,8 @@ if "%CHOICE%"=="3" goto EXIT
 
 echo.
 echo [!] Invalid choice. Enter 1, 2, or 3.
-pause
-goto :eof
+echo.
+goto MENU
 
 
 :CHECK
@@ -56,7 +61,7 @@ echo ================================================================
 echo   Launching: system_check.ps1  (READ-ONLY - no changes made)
 echo ================================================================
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0system_check.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & '%~dp0system_check.ps1' }"
 echo.
 echo ================================================================
 echo   Scan complete. A report file has been saved to this folder.
@@ -64,7 +69,7 @@ echo   ** EMAIL the report to jon@pnwcomputers.com **
 echo   Run option [2] if threats were found and need to be removed.
 echo ================================================================
 pause
-exit /b 0
+goto MENU
 
 
 :FIX
@@ -82,13 +87,13 @@ if /i NOT "%CONFIRM%"=="YES" (
     echo [*] Cancelled. No changes were made.
     echo.
     pause
-    exit /b 0
+    goto MENU
 )
 color 0C
 echo.
 echo [*] Launching Fix.ps1...
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Fix.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; & '%~dp0Fix.ps1' }"
 echo.
 echo ================================================================
 echo   Remediation complete. A report file has been saved.
@@ -96,7 +101,7 @@ echo   ** EMAIL the report to jon@pnwcomputers.com **
 echo   REBOOT this machine, then run option [1] to verify clean.
 echo ================================================================
 pause
-exit /b 0
+goto MENU
 
 
 :EXIT
