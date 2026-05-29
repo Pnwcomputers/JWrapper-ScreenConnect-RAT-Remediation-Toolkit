@@ -407,8 +407,10 @@ try {
 Write-Log ""
 Write-Log "--- STEP 7: PowerShell Event Log Audit ---" "Cyan"
 
-# Find campaign-specific 4104 entries logged by the delivery chain
-# Uses same compound-match logic as system_check.ps1 to avoid false positives
+# Find campaign-specific 4104 entries logged by the SILENTCONNECT delivery chain
+# CRITICAL: Filter strings must NOT appear anywhere in this script itself,
+# otherwise Script Block Logging captures our own code and creates a match loop.
+# These patterns only appear in actual SILENTCONNECT delivery PowerShell:
 $ps4104Hits = [System.Collections.Generic.List[object]]::new()
 try {
     Get-WinEvent -FilterHashtable @{
@@ -417,10 +419,14 @@ try {
         StartTime = (Get-Date).AddDays(-60)
     } -ErrorAction Stop | Where-Object {
         $msg = $_.Message
-        ($msg -like "*ScreenConnect.ClientSetup.msi*" -and $msg -like "*bumptobabeco*") -or
-        ($msg -like "*FileR.txt*" -and $msg -like "*Add-Type*") -or
-        ($msg -like "*ExclusionExtension*" -and $msg -like "*exe*" -and $msg -like "*Force*") -or
-        ($msg -like "*bumptobabeco.top*")
+        # Pattern 1: The exact MSI delivery URL with query parameters (unique to campaign)
+        ($msg -like "*ClientSetup.msi?e=Access&y=Guest*") -or
+        # Pattern 2: SILENTCONNECT C# compile-in-memory signature
+        ($msg -like "*HelloWorld*SayHello*") -or
+        # Pattern 3: curl downloading to C:\Temp with msiexec silent install
+        ($msg -like "*C:\\Temp*ScreenConnect.ClientSetup.msi*msiexec*") -or
+        # Pattern 4: VBScript loader C# source download from Google Drive with Add-Type
+        ($msg -like "*drive.google.com*FileR.txt*Add-Type*")
     } | ForEach-Object { $ps4104Hits.Add($_) }
 } catch {
     # Log may not exist or access denied -- non-fatal
