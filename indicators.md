@@ -185,14 +185,43 @@ AlwaysDeleteSessionOnExit = true    <!-- Session artifacts purged on disconnect 
 
 > All three JWrapper relays use port 443 to blend with HTTPS traffic and bypass firewall rules. They share a single registration key (see Campaign Identifiers), confirming single-operator control.
 
-### SILENTCONNECT VBScript Variant — Additional Infrastructure
+### SILENTCONNECT VBScript Variant — Delivery Infrastructure
 
-```
-bumptobabeco[.]top          # ScreenConnect MSI download and C2 (Elastic, March 2026)
-checkfirst[.]net            # Phishing email sender domain (Elastic, March 2026)
-Cloudflare R2 (r2.dev)      # VBScript payload hosting
-Google Drive                # C# second-stage staging
-```
+| Address / URL | Type | Notes |
+| :--- | :--- | :--- |
+| `bumptobabeco[.]top` | domain | ScreenConnect MSI download and C2 — registered Jan 25, 2026 via NameSilo |
+| `86.38.225.59` | IPv4 | bumptobabeco.top resolved IP — Lithuania, AS398465 rackdog llc |
+| `imansport[.]ir` | domain | VBScript lure delivery endpoint |
+| `solpru[.]com` | domain | DocuSign phishing lure page — confirms e-signature social engineering theme |
+| `checkfirst[.]net` | domain | Phishing email sender domain (Elastic Security Labs) |
+| `checkfirst[.]net.au` | domain | Phishing sender domain — AU variant; lower confidence |
+| `http://imansport.ir/download_invitee.php` | URL | VBScript download endpoint |
+| `http://solpru.com/process/docusign.html` | URL | DocuSign impersonation lure page |
+| `https://bumptobabeco.top/Bin/ScreenConnect.ClientSetup.msi?e=Access&y=Guest` | URL | Direct ScreenConnect MSI delivery URL — first seen serving March 19, 2026 |
+| Cloudflare R2 (`r2.dev`) | hosting | VBScript payload hosting |
+| Google Drive | hosting | C# second-stage payload staging |
+
+### bumptobabeco.top C2 Server Profile
+
+| Field | Value |
+| :--- | :--- |
+| Registered | January 25, 2026 (NameSilo, privacy-guarded) |
+| Hosting IP | `86.38.225.59` — Lithuania, AS398465 rackdog llc |
+| Port 443 | Fully operational weaponized ScreenConnect server |
+| TLS Certificate | Let's Encrypt, issued to `bumptobabeco.top` |
+| Port 443 title | `ScreenConnect Remote Support Software` |
+| Port 80 | Default IIS cover page (Windows Server) |
+| First MSI served | March 19, 2026 |
+| Server fingerprint hash | `c3d4361939d3f6cf2fe798fef68d4713141c48dce7dd29d3838a5d0c66aa29c7` |
+
+> Port 443 on `86.38.225.59` was confirmed serving a live weaponized ScreenConnect management console as of March 2026 — not just a relay, but the full C2 panel. The server fingerprint hash can be used with Shodan/Censys to hunt for additional infrastructure with the same ScreenConnect configuration.
+
+### Threat Actor Contact / Email IOCs
+
+| Address | Confidence | Notes |
+| :--- | :--- | :--- |
+| `dan@checkfirst.net.au` | High | Confirmed phishing campaign sender (Elastic Security Labs) |
+| `advenwolf@proton.me` | Low | Co-listed with `dan@checkfirst.net.au` in OTX pulse 69cd44f1 — possible operator ProtonMail address or campaign registration email |
 
 ### Local IPC Port
 
@@ -388,6 +417,41 @@ rule Windows_Trojan_SilentConnect_cdc03e84 {
 }
 ```
 
+---
+
+## 🔁 Hash Cross-Reference Table
+*(MD5 and SHA1 equivalents for community-corroborated SHA256s — source: OTX pulse 69c227a6)*
+
+| SHA256 | MD5 | SHA1 |
+| :--- | :--- | :--- |
+| `8bab731ac2f7d015b81c2002f518fff06ea751a34a711907e80e98cf70b557db` | `53b705a1ff29b71c0872ee7e969bfaf4` | `d3d5cad0562d3ffd0778e924e45c9a5fd368267b` |
+| `349e78de0fe66d1616890e835ede0d18580abe8830c549973d7df8a2a7ffdcec` | `55c81017eee2ba0db983521b9b769f00` | `d24be8e27e1bd58508c662a74c1358e928d37509` |
+| `c3d4361939d3f6cf2fe798fef68d4713141c48dce7dd29d3838a5d0c66aa29c7` | `658186a75f2a6caba5b7e4af2d4651ca` | `0c950ea3559e7df8118bc8249afb75dd4013ef56` |
+| `81956d08c8efd2f0e29fd3962bcf9559c73b1591081f14a6297e226958c30d03` | `8cc8e4835de092468989d8a2ffcb730a` | `7a5fbbdb2aa7e2c4ddc82c3620d733810d587c27` |
+| `281226ca0203537fa422b17102047dac314bc0c466ec71b2e6350d75f968f2a3` | `cf846e3ce4db94168669eb8dcfe4d956` | `3d99898c8e746bfb46d2333954867acb3d91714c` |
+| `adc1cf894cd35a7d7176ac5dab005bea55516bc9998d0c96223b6c0004723c37` | `fa251523d7da027f49aad93d6049d40e` | `f4f9cfda5bea62a13734c844609d6a8112b6c886` |
+
+Additional SHA1 from OTX pulse 69bd45 (SILENTCONNECT loader variant):
+```
+1b576ebba5b7bbd023eea1b15dac1ed3fb76a211
+```
+
+> **Note:** MD5/SHA1 values above are community-sourced (OTX cross-reference pulses) and have not been independently verified against field-collected samples. Use SHA256 as the authoritative identifier.
+
+---
+
+## 🔗 OTX Threat Intelligence References
+
+This IOC set is published and cross-referenced on AlienVault OTX. Related pulses confirming these indicators:
+
+| Pulse ID | Author | Description |
+| :--- | :--- | :--- |
+| [6a18e9c64ab0a08568d345cd](https://otx.alienvault.com/pulse/6a18e9c64ab0a08568d345cd) | pnwcomputers | Field-sourced IOCs — this repository (20 indicators, TLP:Amber) |
+| [69bd45393fac7e92bd363cad](https://otx.alienvault.com/pulse/69bd45393fac7e92bd363cad) | celestre | IOC — SILENTCONNECT (Elastic Security Labs direct) |
+| [69c227a65f707b407e32de6c](https://otx.alienvault.com/pulse/69c227a65f707b407e32de6c) | CyberHunter_NL | SILENTCONNECT hash cross-reference |
+| [69af7bd5ef2e0695343cd117](https://otx.alienvault.com/pulse/69af7bd5ef2e0695343cd117) | — | RouterHosting/Cloudzy infrastructure (partial overlap) |
+
+> The 7 related pulses auto-linked by OTX confirm these IOCs are corroborated by the broader threat intel community. The `bumptobabeco.top` domain has 4 independent related pulses across OTX.
 ---
 
 *All IOCs verified from live field incident data unless otherwise noted.*
