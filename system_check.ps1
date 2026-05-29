@@ -76,7 +76,7 @@ Write-Host "  Pacific Northwest Computers" -ForegroundColor White
 Write-Host "  Intrusion Detection Checker" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
-Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
+Write-Host "   Intrusion Detection Checker - JWrapper / ScreenConnect      " -ForegroundColor Cyan
 Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
 Write-Host "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
@@ -85,7 +85,7 @@ Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -For
 Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
 Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
 Write-Host ""
-$ActionLog.Add("PNWC Remediation Tool v2.2 -- JWrapper/ScreenConnect (SILENTCONNECT)")
+$ActionLog.Add("PNWC Intrusion Detection Checker v2.2 -- JWrapper/ScreenConnect (SILENTCONNECT)")
 $ActionLog.Add("Started : $(Get-Date)")
 $ActionLog.Add("Computer: $env:COMPUTERNAME")
 $ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
