@@ -7,8 +7,9 @@
     Kills malicious processes, removes services, scrubs registry persistence,
     purges all file system artifacts (including ClickOnce cache, VBScript
     delivery files, and SILENTCONNECT staging paths), removes firewall rules,
-    flushes DNS, removes the Windows Defender .exe exclusion added by the
-    SILENTCONNECT variant, and saves a full timestamped action report.
+    flushes DNS, audits and clears campaign PowerShell Script Block log entries,
+    removes the Windows Defender .exe exclusion added by the SILENTCONNECT
+    variant, and saves a full timestamped action report with all findings.
 
     Run system_check.ps1 FIRST to document the pre-remediation state.
 
@@ -401,10 +402,67 @@ try {
 
 
 # ════════════════════════════════════════════════════════════
-# STEP 7 — WINDOWS DEFENDER EXCLUSION REMOVAL (NEW v2.2)
+# STEP 7 — POWERSHELL EVENT LOG AUDIT & CLEANUP
 # ════════════════════════════════════════════════════════════
 Write-Log ""
-Write-Log "--- STEP 7: Removing Windows Defender Exclusions Added by Malware ---" "Cyan"
+Write-Log "--- STEP 7: PowerShell Event Log Audit ---" "Cyan"
+
+# Find campaign-specific 4104 entries logged by the delivery chain
+# Uses same compound-match logic as system_check.ps1 to avoid false positives
+$ps4104Hits = [System.Collections.Generic.List[object]]::new()
+try {
+    Get-WinEvent -FilterHashtable @{
+        LogName   = 'Microsoft-Windows-PowerShell/Operational'
+        Id        = 4104
+        StartTime = (Get-Date).AddDays(-60)
+    } -ErrorAction Stop | Where-Object {
+        $msg = $_.Message
+        ($msg -like "*ScreenConnect.ClientSetup.msi*" -and $msg -like "*bumptobabeco*") -or
+        ($msg -like "*FileR.txt*" -and $msg -like "*Add-Type*") -or
+        ($msg -like "*ExclusionExtension*" -and $msg -like "*exe*" -and $msg -like "*Force*") -or
+        ($msg -like "*bumptobabeco.top*")
+    } | ForEach-Object { $ps4104Hits.Add($_) }
+} catch {
+    # Log may not exist or access denied -- non-fatal
+}
+
+if ($ps4104Hits.Count -gt 0) {
+    Write-Log "  [!] Found $($ps4104Hits.Count) SILENTCONNECT-pattern PowerShell Script Block log entries" "Yellow"
+    Write-Log "      These were logged when the malware delivery chain executed on this machine." "Gray"
+    Write-Log "      First seen : $($ps4104Hits | Sort-Object TimeCreated | Select-Object -First 1 | ForEach-Object { $_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss') })" "Gray"
+    Write-Log "      Last seen  : $($ps4104Hits | Sort-Object TimeCreated -Descending | Select-Object -First 1 | ForEach-Object { $_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss') })" "Gray"
+    Write-Log "" 
+    Write-Log "  [*] FORENSIC NOTE: These entries have been documented in this report." "Cyan"
+    Write-Log "      If you need to preserve them for law enforcement or insurance," "Cyan"
+    Write-Log "      stop now and export the PowerShell Operational log before proceeding." "Cyan"
+    Write-Log ""
+    # Log all matching entries to the action log for the report
+    $ps4104Hits | Sort-Object TimeCreated | ForEach-Object {
+        $ActionLog.Add("  [4104 HIT] $($_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss'))  |  $($_.Message.Split("`n")[0].Trim())")
+        Log-Removed "PowerShell 4104 entry documented: $($_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss'))"
+    }
+    # Clear the PowerShell Operational log to remove attacker delivery evidence
+    # (entries are already captured in this report above)
+    try {
+        wevtutil cl "Microsoft-Windows-PowerShell/Operational" 2>&1 | Out-Null
+        Write-Log "  [OK] PowerShell Operational event log cleared ($($ps4104Hits.Count) campaign entries removed)" "Green"
+        Log-Removed "PowerShell Operational log cleared (campaign 4104 entries documented and removed)"
+    } catch {
+        Write-Log "  [!] Could not clear PowerShell Operational log: $($_.Exception.Message)" "Red"
+        Write-Log "      Entries are documented in this report. Manual export recommended." "Gray"
+        Log-Failed "PowerShell Operational log clear (entries documented above)"
+    }
+} else {
+    Write-Log "  [--] No SILENTCONNECT-pattern PowerShell Script Block entries found (last 60 days)" "DarkGray"
+    Log-NotFound "PowerShell 4104 campaign entries (none found)"
+}
+
+
+# ════════════════════════════════════════════════════════════
+# STEP 8 — WINDOWS DEFENDER EXCLUSION REMOVAL
+# ════════════════════════════════════════════════════════════
+Write-Log ""
+Write-Log "--- STEP 8: Removing Windows Defender Exclusions Added by Malware ---" "Cyan"
 # SILENTCONNECT adds an ExclusionExtension for .exe during delivery
 # to prevent Defender from scanning the ScreenConnect installer
 try {
@@ -424,10 +482,10 @@ try {
 
 
 # ════════════════════════════════════════════════════════════
-# STEP 8 — POST-REMEDIATION VERIFICATION
+# STEP 9 — POST-REMEDIATION VERIFICATION
 # ════════════════════════════════════════════════════════════
 Write-Log ""
-Write-Log "--- STEP 8: Post-Remediation Verification ---" "Cyan"
+Write-Log "--- STEP 9: Post-Remediation Verification ---" "Cyan"
 $Issues = 0
 $VerifyResults = [System.Collections.Generic.List[string]]::new()
 
@@ -440,6 +498,16 @@ $Checks = @{
     "Process: Remote_Access_Service running"   = { Get-Process "Remote_Access_Service" -ErrorAction SilentlyContinue }
     "File: SILENTCONNECT staging FileR.txt"    = { Test-Path "C:\Windows\Temp\FileR.txt" }
     "Defender: .exe exclusion present"         = { (Get-MpPreference -ErrorAction SilentlyContinue).ExclusionExtension -contains ".exe" }
+    "PowerShell 4104: campaign entries remain" = {
+        $remaining = Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-PowerShell/Operational';Id=4104;StartTime=(Get-Date).AddDays(-60)} -ErrorAction SilentlyContinue |
+            Where-Object {
+                $msg = $_.Message
+                ($msg -like "*ScreenConnect.ClientSetup.msi*" -and $msg -like "*bumptobabeco*") -or
+                ($msg -like "*FileR.txt*" -and $msg -like "*Add-Type*") -or
+                ($msg -like "*bumptobabeco.top*")
+            }
+        $remaining
+    }
 }
 foreach ($check in $Checks.Keys) {
     $result = & $Checks[$check]
