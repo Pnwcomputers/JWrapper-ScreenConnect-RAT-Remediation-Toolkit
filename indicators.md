@@ -1,6 +1,9 @@
 # Medusa IAB Variant (JWrapper/ScreenConnect) — IOC Data Sheet
+## *(SILENTCONNECT Campaign Family)*
 
-This is a field-sourced document of known Indicators of Compromise (IOCs) associated with the dual-channel JWrapper/SimpleHelp and weaponized ScreenConnect intrusion chain, frequently utilized by Initial Access Brokers (IABs) linked to Medusa Ransomware. All entries below are confirmed from real incident response and forensic analysis of live infections.
+This is a field-sourced document of known Indicators of Compromise (IOCs) associated with the dual-channel JWrapper/SimpleHelp and weaponized ScreenConnect intrusion chain, frequently utilized by Initial Access Brokers (IABs) linked to Medusa Ransomware. All entries are confirmed from real incident response and forensic analysis of live infections across multiple victims in SW Washington and the Portland, OR metro area, March 31 – May 2026.
+
+> **Campaign status:** ACTIVE as of May 2026. Multiple confirmed victims sharing identical C2 infrastructure. Designated **SILENTCONNECT** by Elastic Security Labs (March 19, 2026).
 
 *Contributions: Submit a pull request or open an issue to add new IOCs observed in the wild.*
 
@@ -8,20 +11,34 @@ This is a field-sourced document of known Indicators of Compromise (IOCs) associ
 
 ## 📂 File Names & Payloads
 
-### Stage 1: Initial Lure & ScreenConnect
+### Stage 0: Delivery / Phishing Lures
 
 | Filename | Description |
 | :--- | :--- |
-| `e-Signature-Key_Access_ID-MY7362HY73E.exe` | Initial lure / NSIS v2.51 installer. Carries a valid DigiCert Authenticode cert. |
+| `e-Signature-Key_Access_ID-MY7362HY73E.exe` | NSIS v2.51 installer lure. Valid DigiCert Authenticode cert. Blue UAC prompt. |
 | `e-Signature-Key_Access_ID-MY7362HY73E (1).exe` | Duplicate variant (observed on some systems) |
+| `E-INVITE.vbs` | VBScript delivery variant — SILENTCONNECT loader. Downloads C# payload from Google Drive via Cloudflare R2 CAPTCHA page. |
+| `Proposal-03-2026.vbs` | VBScript delivery variant — same loader family |
+| `Alaska Airlines 2026 Fleet & Route Expansion Summary.vbs` | VBScript delivery variant — same loader family |
+| `CODE7_ZOOMCALANDER_INSTALLER_4740.vbs` | VBScript delivery variant — same loader family |
+| `2025Trans.vbs` | VBScript delivery variant — same loader family |
+| `updatv35.vbs` | VBScript delivery variant — same loader family |
+| `C:\Windows\Temp\FileR.txt` | C# source code staged to disk by VBScript loader before in-memory compilation |
+
+> **Note:** VBScript variants use a Cloudflare Turnstile CAPTCHA page as the delivery landing, defeating email gateway sandboxing. The CAPTCHA page downloads the `.vbs` file which then retrieves a C# payload from Google Drive and compiles it in memory before downloading ScreenConnect.
+
+### Stage 1: ScreenConnect Installer & Components
+
+| Filename | Description |
+| :--- | :--- |
 | `rq.msi` | Weaponized ConnectWise ScreenConnect v25.2.4.9229 installer |
 | `rqe.exe` | Custom DotNetRunner — manages the ScreenConnect session |
 | `ScreenConnect.WindowsClient.exe` | ScreenConnect remote access client |
 | `ScreenConnect.WindowsFileManager.exe` | ScreenConnect file transfer component |
 | `ScreenConnect.WindowsBackstageShell.exe` | ScreenConnect remote command shell |
 | `ScreenConnect.WindowsAuthenticationPackage.dll` | Windows credential provider integration DLL |
-| `system.config` | ScreenConnect C2 relay configuration (contains `gqpplgq2g.anondns.net:8041` and RSA-2048 auth key) |
-| `app.config` | ScreenConnect stealth configuration (all 13 user-visibility settings explicitly set to `false`) |
+| `system.config` | ScreenConnect C2 relay config (contains relay hostname, resolved IP, and RSA-2048 auth key) |
+| `app.config` | ScreenConnect stealth config — `AutoConsentToBackstage=true`, all 13 visibility settings suppressed |
 
 ### Stage 2: JWrapper / SimpleHelp RAT
 
@@ -37,7 +54,8 @@ This is a field-sourced document of known Indicators of Compromise (IOCs) associ
 | `jwutils_win32.dll` | JWrapper native utility library — contains `CreateRemoteThread` (process injection) |
 | `jwutils_win64.dll` | JWrapper native utility library 64-bit — contains `CreateRemoteThread` |
 | `libzstd-jni.dll` | Zstandard v1.5.2 compression library — used to compress data before C2 exfiltration |
-| `serviceconfig.xml` | Live C2 configuration file — contains relay IPs, registration key, and capability flags |
+| `ArmUI.ini` | JWrapper multilingual UI resource file (UTF-16 LE, 248KB) — presence confirms JWrapper Stage 2 deployment |
+| `serviceconfig.xml` | Live C2 config — contains relay IPs, registration key, and capability flags |
 | `alertsdb` | Encrypted session activity database (16KB+) — records all C2 session events |
 | `verified` | Plaintext file written after successful C2 connectivity — contains all three relay IPs |
 | `sgport` | Contains the local IPC port used by the RAT service (confirmed: `41431`) |
@@ -60,8 +78,12 @@ C:\Windows\SystemTemp\ScreenConnect\
 C:\Windows\SystemTemp\ScreenConnect\25.2.4.9229\
 %TEMP%\ScreenConnect\
 C:\Windows\Temp\ScreenConnect\
+C:\Windows\Temp\FileR.txt                                       (VBScript variant C# staging file)
+C:\Temp\ScreenConnect.ClientSetup.msi                          (VBScript variant MSI staging path)
 C:\Program Files\ScreenConnect Client*\
 C:\Program Files (x86)\ScreenConnect Client*\
+%LOCALAPPDATA%\Apps\2.0\                                        (ClickOnce cache — ScreenConnect client install)
+%APPDATA%\MMSOFT Design\Pulseway\working\                       (Pulseway staging dir — observed pre-infection)
 ```
 
 ### Notable Individual Files
@@ -96,7 +118,12 @@ These paths are used by the attacker to stage and execute additional PowerShell 
 ```
 C:\Users\jmorgan\Source\cwcontrol\Custom\DotNetRunner\Release\DotNetRunner.pdb
 C:\Compile\screenconnect\Product\WindowsAuthenticationPackage\bin\Release\ScreenConnect.WindowsAuthenticationPackage.pdb
+C:\builds\cc\cwcontrol\Product\ClientService\obj\Release\ScreenConnect.ClientService.pdb
+C:\builds\cc\cwcontrol\Product\Core\obj\Release\net20\ScreenConnect.Core.pdb
+C:\builds\cc\cwcontrol\Product\WindowsClient\obj\Release\ScreenConnect.WindowsClient.pdb
 ```
+
+> The `jmorgan` username in the DotNetRunner PDB path is a confirmed threat actor OPSEC artifact from the custom ScreenConnect build environment.
 
 ---
 
@@ -127,11 +154,26 @@ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remote Access
 
 ## 🌐 Network Infrastructure (C2)
 
-### Stage 1 — ScreenConnect Relay
+### Stage 1 — ScreenConnect Relay Servers
 
-| Address | Port | Protocol | Notes |
-| :--- | :--- | :--- | :--- |
-| `gqpplgq2g.anondns.net` | `8041` | TCP | Anonymous dynamic DNS — conceals true server location |
+| Address / Hostname | Resolved IP | Port | Campaign Wave | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77` | `8041` | April 2026 | **Primary active C2 — confirmed cross-victim** |
+| `instance-fc5xev-relay.screenconnect.com` | `147.28.146.148` | `8041` | April 2024 | Earlier campaign wave — same actor or affiliate |
+| `gqpplgq2g.anondns.net` | Dynamic | `8041` | March–April 2026 | Anonymous dynamic DNS — original documented case |
+
+> **Cross-victim attribution:** `15.204.131.77` (instance-sis2tc) is confirmed in the `user.config` HostToAddressMap of at least two independent victims, with connection timestamps 2 hours apart on April 29, 2026. This is direct evidence of a coordinated campaign, not coincidence.
+
+> **Re-infection indicator:** One victim's `user.config` contains **both** `instance-fc5xev` (2024) and `instance-sis2tc` (2026), indicating either re-infection two years later or persistent access upgraded to the new payload version.
+
+### Stage 1 — ScreenConnect app.config Stealth Flags (Identical Across All Victims)
+
+```xml
+AutoConsentToBackstage    = true    <!-- Attacker gets shell without any user prompt -->
+DisabledCommandNames      = ManageCredentials,VideoPause,VideoStop
+AllowGuestInitiatedFileTransfer = false
+AlwaysDeleteSessionOnExit = true    <!-- Session artifacts purged on disconnect -->
+```
 
 ### Stage 2 — JWrapper / SimpleHelp Gateways
 
@@ -142,6 +184,15 @@ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remote Access
 | `147.45.218.13` | `443` | HTTP (over HTTPS port) | Redundant C2 relay |
 
 > All three JWrapper relays use port 443 to blend with HTTPS traffic and bypass firewall rules. They share a single registration key (see Campaign Identifiers), confirming single-operator control.
+
+### SILENTCONNECT VBScript Variant — Additional Infrastructure
+
+```
+bumptobabeco[.]top          # ScreenConnect MSI download and C2 (Elastic, March 2026)
+checkfirst[.]net            # Phishing email sender domain (Elastic, March 2026)
+Cloudflare R2 (r2.dev)      # VBScript payload hosting
+Google Drive                # C# second-stage staging
+```
 
 ### Local IPC Port
 
@@ -162,6 +213,7 @@ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remote Access
 | `StopSimpleGatewayService.exe` | `d26b8e1ba6383b1f7749a133cfbf90e85a22a4bece9f171ed57a3d1ab7833f48` |
 | `SimpleService.exe` | `d14a1f14d6ca46bd2168b9d2acf281d8eea62d30e2869d47dd4bf0ad556fb9a2` |
 | `ScreenConnect.WindowsAuthenticationPackage.dll` | `a5b8f0070201e4f26260af6a25941ea38bd7042aefd48cd68b9acf951fa99ee5` |
+| `SILENTCONNECT reference sample` | `8bab731ac2f7d015b81c2002f518fff06ea751a34a711907e80e98cf70b557db` |
 
 ---
 
@@ -195,6 +247,13 @@ SG_3243431771723114121
 9F6D305069D23FF1265FA557A597E0CF5EBAE0BEA0EE1BA49A0546E15B809263EB5C0C6AFF2D08B8C9208BDB03B2EDD0A58915D052F76CD9C6B399C414471997
 ```
 
+### ScreenConnect Assembly Token (directory name fragment — identifies this specific payload build)
+
+```
+27fa83f1ad328157    (present in ClickOnce cache directory names across all April 2026 victims)
+420d02d3849b7992    (Core/Windows DLL token — same across all April 2026 victims)
+```
+
 ### JWrapper Package Versions
 
 ```
@@ -214,31 +273,66 @@ e616c631f41874299b8c8306861e080be6528df51d27b72b4329257020491c123b49b93ff6fa2ff7
 
 ---
 
+## 🖥️ Process Indicators
+
+The following processes were confirmed running simultaneously on infected machines via Windows ETL trace analysis. Presence of **all three RAT processes together** is a high-confidence indicator of active dual-channel infection.
+
+### Malicious Processes (Always Investigate)
+
+| Process | Description |
+| :--- | :--- |
+| `SimpleService.exe` | JWrapper SafeBoot persistence daemon |
+| `Remote Access Service.exe` | JWrapper/SimpleHelp main RAT service |
+| `Remote Access.exe` | JWrapper/SimpleHelp launcher alias |
+| `ScreenConnect.ClientService.exe` | Stage 1 RAT service |
+| `ScreenConnect.WindowsClient.exe` | Stage 1 client |
+
+### False Positive Clarification
+
+The following processes were observed on infected machines but are **legitimate software** used by the affected clients — their presence alone is NOT an indicator of compromise:
+
+| Process | Legitimate Use |
+| :--- | :--- |
+| `TeamViewer_Service.exe` | TeamViewer — legitimate remote support tool used by these clients |
+| `ZohoURSService.exe` | Zoho Assist — legitimate RMM used by these clients |
+| `MBAMService.exe` | Malwarebytes Anti-Malware — present and running but did not detect this infection |
+| `QBW.EXE` + QB services | QuickBooks — present on business victim machines |
+| `OUTLOOK.EXE` | Microsoft Outlook — present on business victim machines |
+
+> **Critical note for business victims running QuickBooks and Outlook:** These applications were confirmed present and running during the dwell window on at least one infected business machine. Treat all credentials, financial data, and email history as compromised regardless of whether financial fraud has been discovered yet.
+
+---
+
 ## 🚨 Behavioral Signatures & TTPs (MITRE ATT&CK)
 
 | Tactic | Technique | Detail |
 | :--- | :--- | :--- |
-| Initial Access | T1566.001 | Spearphishing attachment — fake e-signature file |
-| Initial Access | T1656 | Impersonation — e-signature brand (DocuSign/Adobe style lure) |
+| Initial Access | T1566.001 | Spearphishing attachment — fake e-signature file or VBScript lure |
+| Initial Access | T1656 | Impersonation — e-signature brand (DocuSign/Adobe style lure) or fake invitation |
 | Execution | T1204.002 | User Execution: Malicious File |
-| Execution | T1059.001 | PowerShell — confirmed executed immediately post-install |
+| Execution | T1059.001 | PowerShell — VBScript variant compiles C# in-memory; post-install hidden PS execution |
+| Execution | T1059.005 | VBScript — SILENTCONNECT VBScript loader variant |
+| Execution | T1218.007 | System Binary Proxy Execution: Msiexec — `msiexec.exe /i ScreenConnect.ClientSetup.msi` |
 | Persistence | T1543.003 | Create/Modify System Process: Windows Service |
 | Persistence | T1547 | Boot/Logon Autostart — SafeBoot registry key |
-| Privilege Escalation | T1548.002 | Bypass UAC via DigiCert-signed NSIS installer |
+| Privilege Escalation | T1548.002 | Bypass UAC — DigiCert-signed NSIS installer (blue UAC prompt); VBScript variant uses CMSTPLUA COM interface |
 | Defense Evasion | T1036.005 | Masquerading — `.scr` extension, fake e-signature filename |
 | Defense Evasion | T1553.002 | Code Signing — valid DigiCert Authenticode certificate on dropper |
 | Defense Evasion | T1218 | System Binary Proxy Execution — JVM/JWrapper launches payload |
 | Defense Evasion | T1562 | Impair Defenses — polls for and removes legitimate RMM agents |
+| Defense Evasion | T1055.001 | PEB Masquerading — VBScript variant overwrites `BaseDLLName` to `winhlp32.exe` |
+| Defense Evasion | T1140 | Deobfuscate/Decode Files — VBScript variant compiles C# from plaintext at runtime |
 | C2 | T1219 | Remote Access Tools — ScreenConnect + SimpleHelp both weaponized |
 | C2 | T1071.001 | Application Layer Protocol: HTTP traffic disguised on port 443 |
 | C2 | T1568 | Dynamic Resolution — anonymous DNS (`anondns.net`) for Stage 1 C2 |
 | C2 | T1573 | Encrypted Channel — RSA-2048 session keys for JWrapper C2 auth |
+| C2 | T1102 | Web Service — VBScript variant uses Google Drive and Cloudflare R2 as staging |
 | Collection | T1113 | Screen Capture — `AllowMonitoring=true`, `mdupload` class active |
 | Collection | T1056.001 | Keylogging — capability present via active remote desktop control |
 | Exfiltration | T1041 | Exfiltration over C2 Channel — Zstandard-compressed uploads |
 | Lateral Movement | T1021 | Remote Services — SYSTEM-level access enables local network pivot |
 | Injection | T1055 | Process Injection — `CreateRemoteThread` in `jwutils_win32/64.dll` |
-| Discovery | T1518.001 | Security Software Discovery — WMI polls for `MBAMService` (Malwarebytes) and `WinDefend` |
+| Discovery | T1518.001 | Security Software Discovery — WMI polls for `MBAMService` and `WinDefend` |
 
 ### Additional Behavioral Notes
 
@@ -246,12 +340,57 @@ e616c631f41874299b8c8306861e080be6528df51d27b72b4329257020491c123b49b93ff6fa2ff7
 - **Complete UI suppression:** ScreenConnect configured with all 13 visibility settings `false` — no tray icon, no banners, no notifications of any kind during active sessions
 - **Kill-signal resistance:** JVM launched with `-Xrs` flag, making the process resistant to standard `SIGTERM`/OS kill signals
 - **Auto-recovery:** `AllowRecovery=true` causes the service to auto-reconnect if the connection drops
+- **Session cleanup:** `AlwaysDeleteSessionOnExit=true` causes ScreenConnect to purge session artifacts on disconnect, reducing forensic trace
 - **SafeBoot persistence:** `SimpleService.exe` exports `SetSafeBootKey` and `DeleteSafeBootKey` functions — explicitly designed to survive incident response Safe Mode reboots
-- **Redundant C2:** Three relay servers are registered simultaneously; if one is unreachable the RAT fails over automatically, with no single point of failure for the attacker
+- **Redundant C2:** Three JWrapper relay servers are registered simultaneously; if one is unreachable the RAT fails over automatically, with no single point of failure for the attacker
 - **Self-updating:** `GenericUpdater` component checks for and applies RAT updates from C2 servers on an ongoing basis
+- **Pulseway pre-staging observed:** In at least one victim, the `%APPDATA%\MMSOFT Design\Pulseway\working\` directory was created approximately **one month before** the ScreenConnect infection, suggesting Pulseway may have been used as a reconnaissance or initial access tool in a prior stage
 
 ---
 
-*All IOCs verified from live field incident data.*
+## 📅 Confirmed Victim Timeline (Field Data — SW Washington / Portland Metro)
+
+| Date | Event |
+| :--- | :--- |
+| April 8, 2024 | Victim "Enver" — first infection, `instance-fc5xev` / `147.28.146.148` |
+| February 6, 2025 | Victim "Enver" — ScreenConnect payload updated in place (v18.0.004) |
+| March 27, 2026 | Pulseway staging directory created on at least one victim machine |
+| March 31, 2026 | Earliest observed infection date in current wave (field data) |
+| April 29, 2026 20:15 UTC | Victim "Enver" — re-infected / upgraded to current payload (`instance-sis2tc` / `15.204.131.77`) |
+| April 29, 2026 22:18 UTC | Victim "Emina" — infected with identical payload, same C2 relay, ~2 hours later |
+| May 2026 | 4+ additional victims identified in same geographic area; campaign confirmed active |
+
+---
+
+## 🔍 YARA Rule (Elastic Security Labs — SILENTCONNECT)
+
+```yara
+rule Windows_Trojan_SilentConnect_cdc03e84 {
+    meta:
+        author = "Elastic Security"
+        creation_date = "2026-03-04"
+        last_modified = "2026-03-04"
+        os = "Windows"
+        arch = "x86"
+        threat_name = "Windows.Trojan.SilentConnect"
+        reference_sample = "8bab731ac2f7d015b81c2002f518fff06ea751a34a711907e80e98cf70b557db"
+        license = "Elastic License v2"
+    strings:
+        $peb_evade = "winhlp32.exe" wide fullword
+        $rev_elevation = "wen!rotartsinimdA:noitavelE" wide fullword
+        $masquerade_peb_str = "MasqueradePEB" ascii fullword
+        $guid = "3E5FC7F9-9A51-4367-9063-A120244FBEC7" wide fullword
+        $unique_str = "PebFucker" ascii fullword
+        $peb_shellcode = { 53 48 31 DB 48 31 C0 65 48 8B 1C 25 60 00 00 00 }
+        $rev_screenconnect = "tcennoCneercS" ascii wide
+    condition:
+        5 of them
+}
+```
+
+---
+
+*All IOCs verified from live field incident data unless otherwise noted.*
 *Pacific Northwest Computers — jon@pnwcomputers.com | 360-624-7379*
+*Last updated: May 2026*
 *Contributions welcome — see CONTRIBUTE.md*
