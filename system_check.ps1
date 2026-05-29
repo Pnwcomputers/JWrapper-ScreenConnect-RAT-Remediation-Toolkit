@@ -238,12 +238,21 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
     if (Test-Path $coPath) { $ClickOnceDirs.Add($coPath) }
 }
 foreach ($coDir in $ClickOnceDirs) {
-    # Campaign-specific assembly token present in directory names across all confirmed April 2026 victims
+    # All known campaign assembly tokens across all observed payload versions
     Get-ChildItem -Path $coDir -Recurse -Directory -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -like "*27fa83f1ad328157*" } | ForEach-Object {
+        Where-Object {
+            $_.Name -like "*27fa83f1ad328157*" -or   # v25.x -- April 2026 wave
+            $_.Name -like "*1eba6b14258ee2ac*" -or   # v19.x -- 2025 payload
+            $_.Name -like "*25b0fbb6ef7eb094*" -or   # v17-18.x -- 2021-2024 payload
+            $_.Name -like "*b15b0581876c57b7*"        # v15.x -- oldest observed
+        } | ForEach-Object {
             $hit = $true
-            Write-Hit -Label "ScreenConnect ClickOnce Cache (campaign assembly token)" `
-                      -Detail "Dir: $($_.FullName)  |  Token 27fa83f1ad328157 matches April 2026 campaign payload" -Sev "CRITICAL"
+            $token = if ($_.Name -like "*27fa83f1*") {"27fa83f1 (v25.x Apr2026)"}
+                     elseif ($_.Name -like "*1eba6b14*") {"1eba6b14 (v19.x 2025)"}
+                     elseif ($_.Name -like "*25b0fbb6*") {"25b0fbb6 (v17-18.x 2021-2024)"}
+                     else {"b15b0581 (v15.x oldest)"}
+            Write-Hit -Label "ScreenConnect ClickOnce Cache (campaign token: $token)" `
+                      -Detail "Dir: $($_.FullName)" -Sev "CRITICAL"
         }
     # General ScreenConnect in ClickOnce cache
     Get-ChildItem -Path $coDir -Recurse -File -ErrorAction SilentlyContinue |
@@ -307,13 +316,36 @@ if (-not $hit) { Write-Clean "No malicious file system artifacts detected" }
 Write-Section "5. ACTIVE NETWORK CONNECTIONS TO C2"
 $hit = $false
 
-# Known C2 IPs -- Stage 2 JWrapper relays + Stage 1 ScreenConnect relays + SILENTCONNECT delivery
+# Known C2 IPs -- Stage 2 JWrapper relays + all field-confirmed ScreenConnect relay IPs
 $C2IPs = @{
+    # JWrapper C2 relays
     "147.45.218.0"   = "JWrapper C2 primary relay"
     "91.215.85.219"  = "JWrapper C2 redundant relay"
     "147.45.218.13"  = "JWrapper C2 redundant relay"
-    "15.204.131.77"  = "ScreenConnect C2 relay (instance-sis2tc) -- confirmed April 2026 campaign"
-    "147.28.146.148" = "ScreenConnect C2 relay (instance-fc5xev) -- confirmed 2024 campaign wave"
+    # instance-sis2tc (April 2026 mass phishing wave)
+    "15.204.131.77"  = "ScreenConnect C2 relay (instance-sis2tc) -- April 2026 campaign"
+    # instance-fc5xev (2024 wave)
+    "147.28.146.148" = "ScreenConnect C2 relay (instance-fc5xev) -- 2024 campaign wave"
+    # instance-zayrhg (2023-2026 long-term persistence)
+    "15.204.48.24"   = "ScreenConnect C2 relay (instance-zayrhg) -- Mar-Aug 2026"
+    "15.204.48.31"   = "ScreenConnect C2 relay (instance-zayrhg) -- Dec 2025"
+    "15.204.48.34"   = "ScreenConnect C2 relay (instance-zayrhg) -- Jan 2026"
+    "15.204.43.162"  = "ScreenConnect C2 relay (instance-zayrhg) -- Apr-May 2026"
+    "139.178.68.80"  = "ScreenConnect C2 relay (instance-zayrhg) -- May 2023"
+    "139.178.89.196" = "ScreenConnect C2 relay (instance-zayrhg) -- Nov 2024"
+    "139.178.91.96"  = "ScreenConnect C2 relay (instance-zayrhg) -- May 2025"
+    "147.75.70.32"   = "ScreenConnect C2 relay (instance-zayrhg) -- Dec 2024"
+    # instance-c7gab0 (2023-2025)
+    "147.75.70.188"  = "ScreenConnect C2 relay (instance-c7gab0) -- Mar 2023"
+    "139.178.69.0"   = "ScreenConnect C2 relay (instance-c7gab0) -- Aug 2023"
+    "147.75.70.116"  = "ScreenConnect C2 relay (instance-c7gab0) -- Jul 2024"
+    "147.75.70.28"   = "ScreenConnect C2 relay (instance-c7gab0) -- Feb 2025"
+    "15.204.43.236"  = "ScreenConnect C2 relay (instance-c7gab0) -- Oct 2025"
+    # instance-xbirmk (2023-2024)
+    "139.178.89.208" = "ScreenConnect C2 relay (instance-xbirmk) -- Jan 2023 earliest observed"
+    "139.178.89.96"  = "ScreenConnect C2 relay (instance-xbirmk) -- Oct 2023"
+    "139.178.89.228" = "ScreenConnect C2 relay (instance-xbirmk) -- Sep 2024"
+    # SILENTCONNECT delivery
     "86.38.225.59"   = "bumptobabeco.top resolved IP -- SILENTCONNECT delivery server, Lithuania"
 }
 $NetConns = Get-NetTCPConnection -State Established,TimeWait,CloseWait -ErrorAction SilentlyContinue
@@ -340,6 +372,9 @@ $C2Domains = @(
     "*gqpplgq2g*",
     "*instance-sis2tc*",
     "*instance-fc5xev*",
+    "*instance-zayrhg*",
+    "*instance-c7gab0*",
+    "*instance-xbirmk*",
     "*bumptobabeco*",
     "*imansport*",
     "*solpru*",
@@ -442,12 +477,21 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
 }
 foreach ($ucPath in $userConfigPaths) {
     $ucContent = Get-Content $ucPath -ErrorAction SilentlyContinue | Out-String
-    foreach ($indicator in @("instance-sis2tc","instance-fc5xev","15.204.131.77","147.28.146.148","gqpplgq2g","anondns.net")) {
+    foreach ($indicator in @(
+        "instance-sis2tc","instance-fc5xev","instance-zayrhg",
+        "instance-c7gab0","instance-xbirmk",
+        "15.204.131.77","147.28.146.148",
+        "15.204.48.24","15.204.48.31","15.204.48.34","15.204.43.162","15.204.43.236",
+        "139.178.68.80","139.178.89.196","139.178.91.96","147.75.70.32",
+        "147.75.70.188","139.178.69.0","147.75.70.116","147.75.70.28",
+        "139.178.89.208","139.178.89.96","139.178.89.228",
+        "gqpplgq2g","anondns.net"
+    )) {
         if ($ucContent -match [regex]::Escape($indicator)) {
             $hit = $true
             Write-Hit -Label "Known C2 IP/Domain in ScreenConnect user.config" `
                       -Detail "File: $ucPath  |  Contains: $indicator  |  Confirms machine connected to campaign C2" -Sev "CRITICAL"
-            break  # one hit per file is enough to flag it
+            break
         }
     }
 }
@@ -587,10 +631,15 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
     $coPath = Join-Path $_.FullName "AppData\Local\Apps\2.0"
     if (Test-Path $coPath) {
         Get-ChildItem -Path $coPath -Recurse -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -like "*420d02d3849b7992*" } | ForEach-Object {
+            Where-Object {
+                $_.Name -like "*420d02d3849b7992*" -or   # v25.x Core/Windows DLL token
+                $_.Name -like "*1eba6b14258ee2ac*" -or   # v19.x 2025 payload
+                $_.Name -like "*25b0fbb6ef7eb094*" -or   # v17-18.x 2021-2024
+                $_.Name -like "*b15b0581876c57b7*"        # v15.x oldest
+            } | ForEach-Object {
                 $hit = $true
                 Write-Hit -Label "ScreenConnect Campaign DLL Token in ClickOnce Cache" `
-                          -Detail "Dir: $($_.FullName)  |  Token 420d02d3849b7992 matches April 2026 campaign Core/Windows DLL build" -Sev "HIGH"
+                          -Detail "Dir: $($_.FullName)  |  Matches known campaign payload build" -Sev "HIGH"
             }
     }
 }
@@ -761,14 +810,36 @@ $divider
     IP:     91.215.85.219
     IP:     147.45.218.13
     # ScreenConnect campaign relays (field-confirmed)
-    IP:     15.204.131.77
-    IP:     147.28.146.148
+    IP:     15.204.131.77      (instance-sis2tc -- April 2026)
+    IP:     147.28.146.148     (instance-fc5xev -- 2024)
+    # instance-zayrhg (2023-2026)
+    IP:     15.204.48.24
+    IP:     15.204.48.31
+    IP:     15.204.48.34
+    IP:     15.204.43.162
+    IP:     139.178.68.80
+    IP:     139.178.89.196
+    IP:     139.178.91.96
+    IP:     147.75.70.32
+    # instance-c7gab0 (2023-2025)
+    IP:     147.75.70.188
+    IP:     139.178.69.0
+    IP:     147.75.70.116
+    IP:     147.75.70.28
+    IP:     15.204.43.236
+    # instance-xbirmk (2023-2024)
+    IP:     139.178.89.208
+    IP:     139.178.89.96
+    IP:     139.178.89.228
     # SILENTCONNECT delivery infrastructure
     IP:     86.38.225.59
     # Dynamic DNS C2
     Domain: gqpplgq2g.anondns.net
     Domain: instance-sis2tc-relay.screenconnect.com
     Domain: instance-fc5xev-relay.screenconnect.com
+    Domain: instance-zayrhg-relay.screenconnect.com
+    Domain: instance-c7gab0-relay.screenconnect.com
+    Domain: instance-xbirmk-relay.screenconnect.com
     Domain: bumptobabeco.top
     Domain: imansport.ir
     Domain: solpru.com
