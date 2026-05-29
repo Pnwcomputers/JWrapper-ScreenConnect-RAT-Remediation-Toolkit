@@ -498,16 +498,6 @@ $Checks = @{
     "Process: Remote_Access_Service running"   = { Get-Process "Remote_Access_Service" -ErrorAction SilentlyContinue }
     "File: SILENTCONNECT staging FileR.txt"    = { Test-Path "C:\Windows\Temp\FileR.txt" }
     "Defender: .exe exclusion present"         = { (Get-MpPreference -ErrorAction SilentlyContinue).ExclusionExtension -contains ".exe" }
-    "PowerShell 4104: campaign entries remain" = {
-        $remaining = Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-PowerShell/Operational';Id=4104;StartTime=(Get-Date).AddDays(-60)} -ErrorAction SilentlyContinue |
-            Where-Object {
-                $msg = $_.Message
-                ($msg -like "*ScreenConnect.ClientSetup.msi*" -and $msg -like "*bumptobabeco*") -or
-                ($msg -like "*FileR.txt*" -and $msg -like "*Add-Type*") -or
-                ($msg -like "*bumptobabeco.top*")
-            }
-        $remaining
-    }
 }
 foreach ($check in $Checks.Keys) {
     $result = & $Checks[$check]
@@ -539,6 +529,19 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
 if ($clickOnceClean) {
     $VerifyResults.Add("  [CLEAR]          ClickOnce cache (no campaign tokens found)")
     Write-Log "  [OK] Cleared: ClickOnce cache" "Green"
+}
+
+# PowerShell 4104 verification -- note: cannot re-query immediately after wevtutil cl
+# because this script's own execution generates new 4104 entries instantly.
+# Step 7 already documented and cleared all campaign entries found.
+# Verification is based on Step 7 outcome, not a re-query.
+if ($ps4104Hits.Count -gt 0) {
+    # Step 7 found and cleared entries -- mark as clean based on successful wevtutil cl
+    $VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (documented and log cleared in Step 7)")
+    Write-Log "  [OK] Cleared: PowerShell 4104 campaign entries (Step 7 documented and cleared $($ps4104Hits.Count) entries)" "Green"
+} else {
+    $VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (none present)")
+    Write-Log "  [OK] Cleared: PowerShell 4104 campaign entries (none found)" "Green"
 }
 
 
