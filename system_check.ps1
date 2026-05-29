@@ -2,16 +2,16 @@
 .SYNOPSIS
     JWrapper / ScreenConnect Intrusion Detection Checker
     Pacific Northwest Computers - Pre-Remediation Assessment Tool
- 
+
 .DESCRIPTION
     Non-destructive detection script. Makes NO changes to the system.
     Run this BEFORE Fix.ps1 to document what is present.
     Saves a timestamped report with all findings and instructs
     the user to email it to jon@pnwcomputers.com.
- 
+
     Covers both the original NSIS e-signature lure variant and the
     SILENTCONNECT VBScript variant of this campaign family.
- 
+
 .NOTES
     Author  : Pacific Northwest Computers
     Contact : jon@pnwcomputers.com | 360-624-7379
@@ -20,10 +20,10 @@
               detection, VBScript delivery artifacts, app.config/user.config
               C2 confirmation, MMSOFT Pulseway staging dir, new process aliases
 #>
- 
+
 #Requires -RunAsAdministrator
 $ErrorActionPreference = "SilentlyContinue"
- 
+
 # ── Setup ─────────────────────────────────────────────────────────────────────
 $Timestamp     = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 $ScriptDir     = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -32,7 +32,7 @@ $FindingCount  = 0
 $CriticalHits  = 0
 $ScreenLog     = [System.Collections.Generic.List[string]]::new()
 $MaliciousHits = [System.Collections.Generic.List[string]]::new()
- 
+
 function Write-Log {
     param([string]$Msg, [string]$Color = "White")
     Write-Host $Msg -ForegroundColor $Color
@@ -59,38 +59,19 @@ function Write-Hit {
 function Write-Clean { param([string]$L); Write-Log "  [OK] $L" "DarkGreen" }
 
 # ── Banner ────────────────────────────────────────────────────────────────────
-# Ensure console can render box-drawing and block characters
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$host.UI.RawUI.WindowTitle = "PNWC Intrusion Detection Checker v2.2"
-
 Clear-Host
-Write-Host ""
-Write-Host "  ██████╗ ███╗   ██╗██╗    ██╗ ██████╗ " -ForegroundColor Cyan
-Write-Host "  ██╔══██╗████╗  ██║██║    ██║██╔════╝ " -ForegroundColor Cyan
-Write-Host "  ██████╔╝██╔██╗ ██║██║ █╗ ██║██║      " -ForegroundColor Cyan
-Write-Host "  ██╔═══╝ ██║╚██╗██║██║███╗██║██║      " -ForegroundColor Cyan
-Write-Host "  ██║     ██║ ╚████║╚███╔███╔╝╚██████╗ " -ForegroundColor Cyan
-Write-Host "  ╚═╝     ╚═╝  ╚═══╝ ╚══╝╚══╝  ╚═════╝ " -ForegroundColor Cyan
-Write-Host ""
-Write-Host "  Pacific Northwest Computers" -ForegroundColor White
-Write-Host "  Intrusion Detection Checker" -ForegroundColor DarkGray
-Write-Host ""
-Write-Host ("=" * 70) -ForegroundColor DarkCyan
-Write-Host "   Intrusion Detection Checker - JWrapper / ScreenConnect      " -ForegroundColor Cyan
-Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
-Write-Host "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
-Write-Host ("=" * 70) -ForegroundColor DarkCyan
-Write-Host ""
-Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
-Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
-Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
-Write-Host ""
-$ActionLog.Add("PNWC Intrusion Detection Checker v2.2 -- JWrapper/ScreenConnect (SILENTCONNECT)")
-$ActionLog.Add("Started : $(Get-Date)")
-$ActionLog.Add("Computer: $env:COMPUTERNAME")
-$ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
-$ActionLog.Add("Operator: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)")
-$ActionLog.Add(("=" * 70))
+Write-Log ("=" * 70) "DarkCyan"
+Write-Log "   PNWC Detection Checker - JWrapper / ScreenConnect Campaign  " "Cyan"
+Write-Log "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " "Gray"
+Write-Log "   READ-ONLY -- This script makes NO changes to the system     " "Green"
+Write-Log "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " "DarkGray"
+Write-Log ("=" * 70) "DarkCyan"
+Write-Log ""
+Write-Log "  Scan started : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" "Gray"
+Write-Log "  Computer     : $env:COMPUTERNAME" "Gray"
+Write-Log "  Running as   : $([Security.Principal.WindowsIdentity]::GetCurrent().Name)" "Gray"
+Write-Log "  Report file  : $ReportFile" "Gray"
+Write-Log ""
 
 
 # ════════════════════════════════════════════════════════════
@@ -127,8 +108,8 @@ Get-Process -Name "java" -ErrorAction SilentlyContinue |
                   -Detail "java.exe  PID: $($_.Id)  Path: $($_.Path)" -Sev "CRITICAL"
     }
 if (-not $hit) { Write-Clean "No malicious processes found in memory" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 2. SERVICES
 # ════════════════════════════════════════════════════════════
@@ -152,8 +133,8 @@ Get-WmiObject Win32_Service -ErrorAction SilentlyContinue |
                   -Detail "Binary: $($_.PathName)" -Sev "CRITICAL"
     }
 if (-not $hit) { Write-Clean "No malicious services found" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 3. REGISTRY PERSISTENCE
 # ════════════════════════════════════════════════════════════
@@ -196,8 +177,8 @@ Get-ScheduledTask -ErrorAction SilentlyContinue |
                   -Detail "State: $($_.State)  |  Path: $($_.TaskPath)" -Sev "HIGH"
     }
 if (-not $hit) { Write-Clean "No malicious registry keys, Run entries, or scheduled tasks found" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 4. FILE SYSTEM
 # ════════════════════════════════════════════════════════════
@@ -233,7 +214,7 @@ foreach ($p in $FilePaths.Keys) {
         Write-Hit -Label "Artifact Found: $(Split-Path $p -Leaf)" -Detail "Path: $p  |  $detail" -Sev $sev
     }
 }
- 
+
 # ArmUI.ini -- JWrapper locale resource file (Stage 2 confirmed)
 foreach ($userDir in (Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)) {
     $armPath = Join-Path $userDir "AppData\Local\Apps\2.0"
@@ -245,7 +226,7 @@ foreach ($userDir in (Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyC
         }
     }
 }
- 
+
 # ClickOnce cache -- ScreenConnect assembly token check
 $ClickOnceDirs = [System.Collections.Generic.List[string]]::new()
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
@@ -269,7 +250,7 @@ foreach ($coDir in $ClickOnceDirs) {
                       -Detail "Path: $($_.FullName)  |  Modified: $($_.LastWriteTime.ToString('yyyy-MM-dd HH:mm'))" -Sev "HIGH"
         }
 }
- 
+
 # Program Files installs
 foreach ($base in @("C:\Program Files (x86)","C:\Program Files")) {
     Get-ChildItem -Path $base -Filter "ScreenConnect Client*" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
@@ -277,7 +258,7 @@ foreach ($base in @("C:\Program Files (x86)","C:\Program Files")) {
         Write-Hit -Label "ScreenConnect Install Directory Found" -Detail $_.FullName -Sev "HIGH"
     }
 }
- 
+
 # Original dropper / lure files
 foreach ($pat in @(
     "$env:USERPROFILE\Downloads\e-Signature*.exe",
@@ -292,7 +273,7 @@ foreach ($pat in @(
                   -Detail "Path: $($_.FullName)  |  SHA256: $hash" -Sev "CRITICAL"
     }
 }
- 
+
 # VBScript delivery artifacts
 foreach ($vbsPat in @(
     "$env:USERPROFILE\Downloads\*.vbs",
@@ -306,22 +287,22 @@ foreach ($vbsPat in @(
                   -Detail "Path: $($_.FullName)  |  Modified: $($_.LastWriteTime.ToString('yyyy-MM-dd HH:mm'))  |  Possible SILENTCONNECT loader" -Sev "HIGH"
     }
 }
- 
+
 # SCR dropper files
 Get-ChildItem "C:\Windows\SystemTemp\" -Filter "*.scr" -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
     $hit = $true
     Write-Hit -Label "Suspicious .SCR File (JWrapper dropper pattern)" -Detail $_.FullName -Sev "HIGH"
 }
- 
+
 if (-not $hit) { Write-Clean "No malicious file system artifacts detected" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 5. NETWORK C2 CONNECTIONS
 # ════════════════════════════════════════════════════════════
 Write-Section "5. ACTIVE NETWORK CONNECTIONS TO C2"
 $hit = $false
- 
+
 # Known C2 IPs -- Stage 2 JWrapper relays + Stage 1 ScreenConnect relays + SILENTCONNECT delivery
 $C2IPs = @{
     "147.45.218.0"   = "JWrapper C2 primary relay"
@@ -340,7 +321,7 @@ foreach ($ip in $C2IPs.Keys) {
                   -Detail "Remote: $($_.RemoteAddress):$($_.RemotePort)  |  Local port: $($_.LocalPort)  |  PID: $($_.OwningProcess) ($own)  |  $($C2IPs[$ip])" -Sev "CRITICAL"
     }
 }
- 
+
 # ScreenConnect relay port 8041
 $NetConns | Where-Object { $_.RemotePort -eq 8041 } | ForEach-Object {
     $hit = $true
@@ -348,7 +329,7 @@ $NetConns | Where-Object { $_.RemotePort -eq 8041 } | ForEach-Object {
     Write-Hit -Label "LIVE SCREENCONNECT C2 BEACON (port 8041)" `
               -Detail "Remote: $($_.RemoteAddress):8041  |  PID: $($_.OwningProcess) ($own)  |  ScreenConnect C2 relay port" -Sev "CRITICAL"
 }
- 
+
 # DNS cache -- all known C2 domains and relay hostnames
 $C2Domains = @(
     "*anondns.net*",
@@ -368,7 +349,7 @@ foreach ($pattern in $C2Domains) {
                       -Detail "Resolved IP: $($_.Data)  |  Machine recently contacted known C2 infrastructure" -Sev "HIGH"
         }
 }
- 
+
 # JWrapper port 443 beacons from malicious process names
 foreach ($pn in @("Remote_Access_Service","SimpleService","java")) {
     Get-Process -Name $pn -ErrorAction SilentlyContinue | ForEach-Object {
@@ -380,10 +361,10 @@ foreach ($pn in @("Remote_Access_Service","SimpleService","java")) {
         }
     }
 }
- 
+
 if (-not $hit) { Write-Clean "No active connections to known C2 addresses or domains" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 6. LOG FILE EVIDENCE
 # ════════════════════════════════════════════════════════════
@@ -413,14 +394,14 @@ if (Test-Path $LogDir) {
     }
 }
 if (-not $hit) { Write-Clean "No JWrapper log files found" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 7. SCREENCONNECT ARTIFACTS & CONFIG ANALYSIS
 # ════════════════════════════════════════════════════════════
 Write-Section "7. SCREENCONNECT ARTIFACTS & CONFIG ANALYSIS"
 $hit = $false
- 
+
 $SCFiles = @{
     "C:\Windows\SystemTemp\ScreenConnect\25.2.4.9229\system.config" = "C2 relay config"
     "C:\Windows\SystemTemp\ScreenConnect\25.2.4.9229\app.config"    = "Stealth/visibility settings"
@@ -435,7 +416,7 @@ foreach ($p in $SCFiles.Keys) {
         Write-Hit -Label "SC Artifact: $(Split-Path $p -Leaf)" -Detail "Path: $p  |  $($SCFiles[$p])" -Sev $sev
     }
 }
- 
+
 # system.config: check for known C2 relay domains/IPs
 $sysConfigPath = "C:\Windows\SystemTemp\ScreenConnect\25.2.4.9229\system.config"
 if (Test-Path $sysConfigPath) {
@@ -448,7 +429,7 @@ if (Test-Path $sysConfigPath) {
         }
     }
 }
- 
+
 # user.config: HostToAddressMap -- reveals resolved C2 IPs and timestamps
 $userConfigPaths = [System.Collections.Generic.List[string]]::new()
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
@@ -466,7 +447,7 @@ foreach ($ucPath in $userConfigPaths) {
         }
     }
 }
- 
+
 # app.config: AutoConsentToBackstage = true is the campaign's stealth flag
 $appConfigPaths = [System.Collections.Generic.List[string]]::new()
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
@@ -481,10 +462,10 @@ foreach ($acPath in $appConfigPaths) {
                   -Detail "File: $acPath  |  AutoConsentToBackstage=true -- attacker receives shell without any user prompt" -Sev "CRITICAL"
     }
 }
- 
+
 if (-not $hit) { Write-Clean "No ScreenConnect artifacts found" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 8. EVENT LOG INDICATORS
 # ════════════════════════════════════════════════════════════
@@ -504,16 +485,25 @@ Get-WinEvent -FilterHashtable @{LogName='Security';Id=4688;StartTime=(Get-Date).
                   -Detail "$($_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss'))  |  Malicious binary in Security audit log" -Sev "HIGH"
     }
 # PowerShell Script Block Logging (4104) - catches VBScript/PS delivery variant
+# Filter is intentionally specific to avoid false-positives from this script running
+# Matches campaign delivery strings that would never appear in legitimate admin tools
 Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-PowerShell/Operational';Id=4104;StartTime=(Get-Date).AddDays(-60)} -ErrorAction SilentlyContinue |
-    Where-Object { $_.Message -like "*ScreenConnect.ClientSetup*" -or $_.Message -like "*FileR.txt*" -or $_.Message -like "*bumptobabeco*" -or $_.Message -like "*ExclusionExtension*" } |
+    Where-Object {
+        $msg = $_.Message
+        # Match only on campaign-specific payload strings, not generic terms this script uses
+        ($msg -like "*ScreenConnect.ClientSetup.msi*" -and $msg -like "*bumptobabeco*") -or
+        ($msg -like "*FileR.txt*" -and $msg -like "*Add-Type*") -or
+        ($msg -like "*ExclusionExtension*" -and $msg -like "*exe*" -and $msg -like "*Force*") -or
+        ($msg -like "*bumptobabeco.top*")
+    } |
     Select-Object -First 3 | ForEach-Object {
         $hit = $true
-        Write-Hit -Label "Event 4104: Suspicious PowerShell Script Block" `
-                  -Detail "$($_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss'))  |  SILENTCONNECT-pattern PowerShell logged" -Sev "CRITICAL"
+        Write-Hit -Label "Event 4104: SILENTCONNECT Delivery PowerShell Logged" `
+                  -Detail "$($_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss'))  |  Campaign-pattern PowerShell script block captured in Security log" -Sev "CRITICAL"
     }
 if (-not $hit) { Write-Clean "No matching indicators in event logs (last 60 days)" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 9. INSTALLED PROGRAMS
 # ════════════════════════════════════════════════════════════
@@ -533,8 +523,8 @@ foreach ($reg in @(
         }
 }
 if (-not $hit) { Write-Clean "No suspicious programs in Add/Remove Programs" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 10. FIREWALL RULES
 # ════════════════════════════════════════════════════════════
@@ -548,8 +538,8 @@ Get-NetFirewallRule -ErrorAction SilentlyContinue |
                   -Detail "Direction: $($_.Direction)  |  Action: $($_.Action)  |  Enabled: $($_.Enabled)" -Sev "HIGH"
     }
 if (-not $hit) { Write-Clean "No suspicious firewall rules detected" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 11. KNOWN HASH MATCHING
 # ════════════════════════════════════════════════════════════
@@ -591,14 +581,14 @@ foreach ($loc in $ScanLocations) {
     }
 }
 if (-not $hit) { Write-Clean "No files matching known campaign hashes found" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # 12. ADDITIONAL CAMPAIGN-SPECIFIC INDICATORS (NEW v2.2)
 # ════════════════════════════════════════════════════════════
 Write-Section "12. ADDITIONAL CAMPAIGN INDICATORS (v2.2)"
 $hit = $false
- 
+
 # ClickOnce user.config with cross-victim C2 relay token (assembly token shared across all April 2026 victims)
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
     $coPath = Join-Path $_.FullName "AppData\Local\Apps\2.0"
@@ -611,7 +601,7 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
             }
     }
 }
- 
+
 # JWrapper session files
 foreach ($sessionFile in @(
     "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\sgport",
@@ -624,7 +614,7 @@ foreach ($sessionFile in @(
                   -Detail "Path: $sessionFile  |  Modified: $($item.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))  |  Confirms active/recent C2 session" -Sev "HIGH"
     }
 }
- 
+
 # SecMsg authentication token files (per-relay encrypted session tokens)
 if (Test-Path "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig") {
     Get-ChildItem -Path "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig" -Filter "secmsg-http*.secmsg" -ErrorAction SilentlyContinue | ForEach-Object {
@@ -633,7 +623,7 @@ if (Test-Path "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig") {
                   -Detail "Path: $($_.FullName)  |  Encrypted per-relay session authentication token" -Sev "HIGH"
     }
 }
- 
+
 # Pulseway staging directory (observed ~1 month before ScreenConnect infection in field data)
 if (Test-Path "$env:APPDATA\MMSOFT Design\Pulseway") {
     $pulsewayInstalled = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue |
@@ -644,7 +634,7 @@ if (Test-Path "$env:APPDATA\MMSOFT Design\Pulseway") {
                   -Detail "Path: $env:APPDATA\MMSOFT Design\Pulseway  |  Pulseway RMM staging without a matching uninstall entry -- possible attacker pre-staging" -Sev "MEDIUM"
     }
 }
- 
+
 # Defender exclusion for .exe (SILENTCONNECT adds this via PowerShell during delivery)
 $defExclusions = (Get-MpPreference -ErrorAction SilentlyContinue).ExclusionExtension
 if ($defExclusions -and $defExclusions -contains ".exe") {
@@ -652,10 +642,10 @@ if ($defExclusions -and $defExclusions -contains ".exe") {
     Write-Hit -Label "Windows Defender .exe Extension Exclusion Set" `
               -Detail "Defender is configured to skip scanning .exe files -- SILENTCONNECT adds this during installation to prevent detection of the ScreenConnect installer" -Sev "CRITICAL"
 }
- 
+
 if (-not $hit) { Write-Clean "No additional campaign indicators found" }
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # CONSOLE SUMMARY
 # ════════════════════════════════════════════════════════════
@@ -680,18 +670,18 @@ if ($CriticalHits -gt 0) {
 Write-Log ""
 Write-Log "  Report saved to: $ReportFile" "Cyan"
 Write-Log ("=" * 70) "DarkCyan"
- 
- 
+
+
 # ════════════════════════════════════════════════════════════
 # BUILD AND SAVE REPORT FILE
 # ════════════════════════════════════════════════════════════
 $statusText = if ($CriticalHits -gt 0) { "ACTIVELY COMPROMISED -- $CriticalHits CRITICAL finding(s), $FindingCount total" }
               elseif ($FindingCount -gt 0) { "SUSPICIOUS ARTIFACTS PRESENT -- $FindingCount finding(s), 0 critical" }
               else { "NO INDICATORS DETECTED -- System appears clean" }
- 
+
 $divider  = "=" * 70
 $divider2 = "-" * 70
- 
+
 $reportContent = @"
 $divider
   PNWC INTRUSION DETECTION REPORT
@@ -702,7 +692,7 @@ $divider
   Email       : jon@pnwcomputers.com
   Tool ver    : 2.2
 $divider
- 
+
   ##############################################################
   ##                                                          ##
   ##   PLEASE EMAIL THIS REPORT TO: jon@pnwcomputers.com     ##
@@ -714,7 +704,7 @@ $divider
   ##     Malware Scan Report - $env:COMPUTERNAME              ##
   ##                                                          ##
   ##############################################################
- 
+
 $divider
 SCAN INFORMATION
 $divider
@@ -729,20 +719,20 @@ $divider
   CRITICAL findings : $CriticalHits
   Total findings    : $FindingCount
 $divider
- 
+
 "@
- 
+
 if ($MaliciousHits.Count -gt 0) {
     $reportContent += @"
 $divider
 MALICIOUS FINDINGS  (items that need attention / removal)
 $divider
- 
+
 $($MaliciousHits | Out-String)
 $divider
 END OF MALICIOUS FINDINGS
 $divider
- 
+
 "@
 } else {
     $reportContent += @"
@@ -752,26 +742,26 @@ $divider
   None detected. System appears clean.
   If malware was recently removed by Fix.ps1, this is expected.
 $divider
- 
+
 "@
 }
- 
+
 $reportContent += @"
 $divider
 RECOMMENDED NEXT STEPS
 $divider
- 
+
   REGARDLESS OF SCAN RESULT:
   1. Change ALL passwords used on this computer since March 30, 2026
        Priority: email, banking, QuickBooks, business portals, cloud services
   2. Enable Multi-Factor Authentication (MFA/2FA) on every account
   3. Review bank/financial accounts for unauthorized transactions
- 
+
   IF THREATS WERE FOUND:
   4. Run Fix.ps1 as Administrator to remove all detected malware
   5. Reboot the machine after Fix.ps1 completes
   6. Re-run system_check.ps1 after reboot to confirm clean state
- 
+
   BLOCK AT YOUR ROUTER / FIREWALL:
     # JWrapper C2 relays
     IP:     147.45.218.0
@@ -789,7 +779,7 @@ $divider
     Domain: bumptobabeco.top
     Domain: imansport.ir
     Domain: solpru.com
- 
+
 $divider
 CONTACT PNWC FOR ASSISTANCE
 $divider
@@ -797,13 +787,13 @@ $divider
   Jon Pienkowski -- CompTIA A+ Certified
   Phone : 360-624-7379
   Email : jon@pnwcomputers.com
- 
+
 $divider
 FULL SCAN LOG (all sections including clean checks)
 $divider
- 
+
 $($ScreenLog | Out-String)
- 
+
 $divider
   ##############################################################
   ##   PLEASE EMAIL THIS REPORT TO: jon@pnwcomputers.com     ##
@@ -811,7 +801,7 @@ $divider
   ##############################################################
 $divider
 "@
- 
+
 try {
     $reportContent | Out-File -FilePath $ReportFile -Encoding UTF8
     Write-Host ""
