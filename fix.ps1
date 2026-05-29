@@ -245,9 +245,15 @@ Write-Log "  [*] Scanning ClickOnce cache for ScreenConnect artifacts..." "Yello
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
     $coPath = Join-Path $_.FullName "AppData\Local\Apps\2.0"
     if (Test-Path $coPath) {
-        # Target directories containing the campaign assembly token or ScreenConnect binaries
+        # All known campaign assembly tokens across all observed payload versions
         Get-ChildItem -Path $coPath -Recurse -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -like "*27fa83f1ad328157*" -or $_.Name -like "*420d02d3849b7992*" } |
+            Where-Object {
+                $_.Name -like "*27fa83f1ad328157*" -or   # v25.x April 2026 wave
+                $_.Name -like "*420d02d3849b7992*" -or   # v25.x Core/Windows DLL
+                $_.Name -like "*1eba6b14258ee2ac*" -or   # v19.x 2025 payload
+                $_.Name -like "*25b0fbb6ef7eb094*" -or   # v17-18.x 2021-2024
+                $_.Name -like "*b15b0581876c57b7*"        # v15.x oldest observed
+            } |
             ForEach-Object {
                 Remove-LockedPath -Path $_.FullName -Label "ClickOnce cache dir (campaign token): $($_.FullName)"
             }
@@ -355,11 +361,33 @@ Get-NetFirewallRule -ErrorAction SilentlyContinue |
 
 # Add outbound block rules for all known C2 IPs
 $C2BlockIPs = @{
+    # JWrapper C2 relays
     "147.45.218.0"   = "JWrapper C2 primary relay"
     "91.215.85.219"  = "JWrapper C2 redundant relay"
     "147.45.218.13"  = "JWrapper C2 redundant relay"
+    # instance-sis2tc
     "15.204.131.77"  = "ScreenConnect C2 relay (instance-sis2tc) -- April 2026 campaign"
     "147.28.146.148" = "ScreenConnect C2 relay (instance-fc5xev) -- 2024 campaign wave"
+    # instance-zayrhg (2023-2026)
+    "15.204.48.24"   = "ScreenConnect C2 relay (instance-zayrhg) -- Mar-Aug 2026"
+    "15.204.48.31"   = "ScreenConnect C2 relay (instance-zayrhg) -- Dec 2025"
+    "15.204.48.34"   = "ScreenConnect C2 relay (instance-zayrhg) -- Jan 2026"
+    "15.204.43.162"  = "ScreenConnect C2 relay (instance-zayrhg) -- Apr-May 2026"
+    "139.178.68.80"  = "ScreenConnect C2 relay (instance-zayrhg) -- May 2023"
+    "139.178.89.196" = "ScreenConnect C2 relay (instance-zayrhg) -- Nov 2024"
+    "139.178.91.96"  = "ScreenConnect C2 relay (instance-zayrhg) -- May 2025"
+    "147.75.70.32"   = "ScreenConnect C2 relay (instance-zayrhg) -- Dec 2024"
+    # instance-c7gab0 (2023-2025)
+    "147.75.70.188"  = "ScreenConnect C2 relay (instance-c7gab0) -- Mar 2023"
+    "139.178.69.0"   = "ScreenConnect C2 relay (instance-c7gab0) -- Aug 2023"
+    "147.75.70.116"  = "ScreenConnect C2 relay (instance-c7gab0) -- Jul 2024"
+    "147.75.70.28"   = "ScreenConnect C2 relay (instance-c7gab0) -- Feb 2025"
+    "15.204.43.236"  = "ScreenConnect C2 relay (instance-c7gab0) -- Oct 2025"
+    # instance-xbirmk (2023-2024)
+    "139.178.89.208" = "ScreenConnect C2 relay (instance-xbirmk) -- Jan 2023"
+    "139.178.89.96"  = "ScreenConnect C2 relay (instance-xbirmk) -- Oct 2023"
+    "139.178.89.228" = "ScreenConnect C2 relay (instance-xbirmk) -- Sep 2024"
+    # SILENTCONNECT delivery
     "86.38.225.59"   = "bumptobabeco.top -- SILENTCONNECT delivery server, Lithuania"
 }
 foreach ($ip in $C2BlockIPs.Keys) {
@@ -651,14 +679,36 @@ $divider
     IP: 91.215.85.219
     IP: 147.45.218.13
     # ScreenConnect campaign relays (field-confirmed)
-    IP: 15.204.131.77
-    IP: 147.28.146.148
+    IP: 15.204.131.77      (instance-sis2tc -- April 2026)
+    IP: 147.28.146.148     (instance-fc5xev -- 2024)
+    # instance-zayrhg (2023-2026)
+    IP: 15.204.48.24
+    IP: 15.204.48.31
+    IP: 15.204.48.34
+    IP: 15.204.43.162
+    IP: 139.178.68.80
+    IP: 139.178.89.196
+    IP: 139.178.91.96
+    IP: 147.75.70.32
+    # instance-c7gab0 (2023-2025)
+    IP: 147.75.70.188
+    IP: 139.178.69.0
+    IP: 147.75.70.116
+    IP: 147.75.70.28
+    IP: 15.204.43.236
+    # instance-xbirmk (2023-2024)
+    IP: 139.178.89.208
+    IP: 139.178.89.96
+    IP: 139.178.89.228
     # SILENTCONNECT delivery infrastructure
     IP: 86.38.225.59
     # Dynamic DNS
     Domain: gqpplgq2g.anondns.net
     Domain: instance-sis2tc-relay.screenconnect.com
     Domain: instance-fc5xev-relay.screenconnect.com
+    Domain: instance-zayrhg-relay.screenconnect.com
+    Domain: instance-c7gab0-relay.screenconnect.com
+    Domain: instance-xbirmk-relay.screenconnect.com
     Domain: bumptobabeco.top
     Domain: imansport.ir
     Domain: solpru.com
