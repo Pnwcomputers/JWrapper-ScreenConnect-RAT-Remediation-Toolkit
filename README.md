@@ -56,17 +56,18 @@ This means that even if you boot the machine into **Safe Mode with Networking** 
 
 ## 🔗 Multi-Victim Campaign Attribution
 
-Field data collected across 6+ confirmed victims in SW Washington / Portland metro area reveals shared C2 infrastructure, confirming a single coordinated campaign:
+Field data collected across 6+ confirmed victims in SW Washington / Portland metro area, plus a confirmed multi-machine business compromise active since January 2023, reveals shared C2 infrastructure confirming a long-running coordinated campaign:
 
-| Relay Instance | Resolved IP | Victims | Connection Window |
+| Relay Instance | IPs Observed | Campaign Wave | Notes |
 | :--- | :--- | :--- | :--- |
-| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77` | Multiple (confirmed cross-victim) | April 29, 2026 |
-| `instance-fc5xev-relay.screenconnect.com` | `147.28.146.148` | Enver (re-infected victim) | April 8, 2024 |
-| `gqpplgq2g.anondns.net` | Dynamic | Original documented case | March–April 2026 |
+| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77` | April 2026 | Cross-victim confirmed — multiple victims 2 hrs apart |
+| `instance-fc5xev-relay.screenconnect.com` | `147.28.146.148` | 2024 | Earlier campaign wave |
+| `instance-zayrhg-relay.screenconnect.com` | `15.204.48.x`, `15.204.43.x`, `139.178.x.x` | 2023–2026 | Long-running — 14+ IP rotations over 3 years |
+| `instance-c7gab0-relay.screenconnect.com` | `147.75.70.x`, `15.204.43.236` | 2023–2025 | Secondary relay on same business network |
+| `instance-xbirmk-relay.screenconnect.com` | `139.178.89.x` | 2023–2024 | Earliest observed access, Jan 2023 |
+| `gqpplgq2g.anondns.net` | Dynamic | March–April 2026 | Anonymous dynamic DNS — original documented case |
 
-The April 2026 wave shows two confirmed victims connecting to the **same C2 relay server 2 hours apart on the same date**, consistent with a threat actor working through a phishing blast victim list sequentially.
-
-The `instance-fc5xev` / `147.28.146.148` relay represents an **earlier campaign wave** (2024), suggesting the same threat actor or affiliate network has been operating this infrastructure for over two years with periodic payload updates.
+> **Long-term persistence confirmed:** One business network shows continuous compromise across server and multiple workstations from January 2023 through May 2026 — over 3 years of undetected access. The same operator maintained three simultaneous relay connections, rotated IPs under stable relay hostnames, and periodically upgraded the payload version. Windows Defender was running throughout and detected nothing.
 
 ---
 
@@ -181,17 +182,42 @@ Each report opens automatically in Notepad at completion and contains:
 91.215.85.219         (JWrapper C2 - redundant)
 147.45.218.13         (JWrapper C2 - redundant)
 
-# ScreenConnect C2 — Stage 1 relays (field-confirmed)
-15.204.131.77         (instance-sis2tc relay — April 2026 campaign wave)
-147.28.146.148        (instance-fc5xev relay — 2024 campaign wave, same actor)
+# ScreenConnect C2 — Stage 1 relays (field-confirmed, April 2026 wave)
+15.204.131.77         (instance-sis2tc -- April 2026, cross-victim confirmed)
+147.28.146.148        (instance-fc5xev -- 2024 campaign wave)
+
+# ScreenConnect C2 — instance-zayrhg relay (2023–2026, rotating IPs)
+15.204.48.24          (instance-zayrhg -- Mar–Aug 2026)
+15.204.48.31          (instance-zayrhg -- Dec 2025)
+15.204.48.34          (instance-zayrhg -- Jan 2026)
+15.204.43.162         (instance-zayrhg -- Apr–May 2026)
+139.178.68.80         (instance-zayrhg -- May 2023)
+139.178.89.196        (instance-zayrhg -- Nov 2024)
+139.178.91.96         (instance-zayrhg -- May 2025)
+147.75.70.32          (instance-zayrhg -- Dec 2024)
+
+# ScreenConnect C2 — instance-c7gab0 relay (2023–2025, rotating IPs)
+147.75.70.188         (instance-c7gab0 -- Mar 2023)
+147.75.70.116         (instance-c7gab0 -- Jul 2024)
+147.75.70.28          (instance-c7gab0 -- Feb 2025)
+15.204.43.236         (instance-c7gab0 -- Oct 2025)
+139.178.69.0          (instance-c7gab0 -- Aug 2023)
+
+# ScreenConnect C2 — instance-xbirmk relay (2023–2024)
+139.178.89.208        (instance-xbirmk -- Jan 2023, earliest observed)
+139.178.89.96         (instance-xbirmk -- Oct 2023)
+139.178.89.228        (instance-xbirmk -- Sep 2024)
 
 # SILENTCONNECT delivery infrastructure (Elastic Security Labs + OTX corroborated)
-86.38.225.59          (bumptobabeco.top resolved IP — Lithuania, AS398465 rackdog llc)
+86.38.225.59          (bumptobabeco.top -- Lithuania, AS398465 rackdog llc)
 
 # Dynamic DNS C2
 gqpplgq2g.anondns.net    (ScreenConnect C2 relay — original documented case)
 instance-sis2tc-relay.screenconnect.com
 instance-fc5xev-relay.screenconnect.com
+instance-zayrhg-relay.screenconnect.com
+instance-c7gab0-relay.screenconnect.com
+instance-xbirmk-relay.screenconnect.com
 
 # Known SILENTCONNECT campaign domains (Elastic Security Labs, March 2026)
 bumptobabeco[.]top
