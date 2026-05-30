@@ -71,32 +71,15 @@ $host.UI.RawUI.WindowTitle = "PNWC Remediation Tool v2.3"
 
 Clear-Host
 Write-Host ""
-Write-Host "  ██████╗ ███╗   ██╗██╗    ██╗ ██████╗ " -ForegroundColor Cyan
-Write-Host "  ██╔══██╗████╗  ██║██║    ██║██╔════╝ " -ForegroundColor Cyan
-Write-Host "  ██████╔╝██╔██╗ ██║██║ █╗ ██║██║      " -ForegroundColor Cyan
-Write-Host "  ██╔═══╝ ██║╚██╗██║██║███╗██║██║      " -ForegroundColor Cyan
-Write-Host "  ██║     ██║ ╚████║╚███╔███╔╝╚██████╗ " -ForegroundColor Cyan
-Write-Host "  ╚═╝     ╚═╝  ╚═══╝ ╚══╝╚══╝  ╚═════╝ " -ForegroundColor Cyan
+Write-Host "  ____  _   ___        ______  " -ForegroundColor Cyan
+Write-Host " |  _ \| \ | \ \      / / ___| " -ForegroundColor Cyan
+Write-Host " | |_) |  \| |\ \ /\ / /| |    " -ForegroundColor Cyan
+Write-Host " |  __/| |\  | \ V  V / | |___ " -ForegroundColor Cyan
+Write-Host " |_|   |_| \_|  \_/\_/   \____| " -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Pacific Northwest Computers" -ForegroundColor White
 Write-Host "  Malware Remediation Toolkit" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host ("=" * 70) -ForegroundColor DarkCyan
-Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
-Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
-Write-Host "   v2.3 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
-Write-Host ("=" * 70) -ForegroundColor DarkCyan
-Write-Host ""
-Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
-Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
-Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
-Write-Host ""
-$ActionLog.Add("PNWC Remediation Tool v2.3 -- JWrapper/ScreenConnect (SILENTCONNECT)")
-$ActionLog.Add("Started : $(Get-Date)")
-$ActionLog.Add("Computer: $env:COMPUTERNAME")
-$ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
-$ActionLog.Add("Operator: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)")
-$ActionLog.Add(("=" * 70))
 
 # ════════════════════════════════════════════════════════════
 # STEP 1 — KILL PROCESSES
