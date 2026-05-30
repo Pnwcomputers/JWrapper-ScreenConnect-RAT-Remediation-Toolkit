@@ -15,7 +15,7 @@
 .NOTES
     Author  : Pacific Northwest Computers
     Contact : jon@pnwcomputers.com | 360-624-7379
-    Version : 2.3
+    Version : 2.4.0
     Updated : May 2026 -- added cross-victim C2 IPs, ClickOnce cache
               detection, VBScript delivery artifacts, app.config/user.config
               C2 confirmation, MMSOFT Pulseway staging dir, new process aliases
@@ -69,7 +69,7 @@ function Write-Clean { param([string]$L); Write-Log "  [OK] $L" "DarkGreen" }
 # Pure-ASCII banner. Avoids UTF-8 box-drawing chars so this renders correctly
 # regardless of console codepage (some PowerShell 5.1 / Windows console host
 # combinations ignore chcp 65001 and decode output as cp1252, producing mojibake).
-$host.UI.RawUI.WindowTitle = "PNWC Intrusion Detection Checker v2.3"
+$host.UI.RawUI.WindowTitle = "PNWC Intrusion Detection Checker v2.4.0"
 
 Clear-Host
 Write-Host ""
@@ -85,14 +85,14 @@ Write-Host ""
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
 Write-Host "   Intrusion Detection Checker - JWrapper / ScreenConnect      " -ForegroundColor Cyan
 Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
-Write-Host "   v2.3 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
+Write-Host "   v2.4.0 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
 Write-Host ""
 Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
 Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
 Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
 Write-Host ""
-$ActionLog.Add("PNWC Intrusion Detection Checker v2.3 -- JWrapper/ScreenConnect (SILENTCONNECT)")
+$ActionLog.Add("PNWC Intrusion Detection Checker v2.4.0 -- JWrapper/ScreenConnect (SILENTCONNECT)")
 $ActionLog.Add("Started : $(Get-Date)")
 $ActionLog.Add("Computer: $env:COMPUTERNAME")
 $ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
@@ -649,9 +649,9 @@ if (-not $script:hit) { Write-Clean "No files matching known campaign hashes fou
 
 
 # ════════════════════════════════════════════════════════════
-# 12. ADDITIONAL CAMPAIGN-SPECIFIC INDICATORS (NEW v2.3)
+# 12. ADDITIONAL CAMPAIGN-SPECIFIC INDICATORS (NEW v2.4.0)
 # ════════════════════════════════════════════════════════════
-Write-Section "12. ADDITIONAL CAMPAIGN INDICATORS (v2.3)"
+Write-Section "12. ADDITIONAL CAMPAIGN INDICATORS (v2.4.0)"
 $script:hit = $false
 $null = $script:hit  # Suppress linter warning
 
@@ -760,7 +760,7 @@ $divider
   Prepared by : Pacific Northwest Computers
   Phone       : 360-624-7379
   Email       : jon@pnwcomputers.com
-  Tool ver    : 2.3
+  Tool ver    : 2.4.0
 $divider
 
   ##############################################################
