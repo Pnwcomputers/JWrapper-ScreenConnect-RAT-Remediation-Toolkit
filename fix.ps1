@@ -78,18 +78,18 @@ function Remove-LockedPath {
 }
 
 # ── Banner ────────────────────────────────────────────────────────────────────
-# Ensure console can render box-drawing and block characters
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+# Pure-ASCII banner. Avoids UTF-8 box-drawing chars so this renders correctly
+# regardless of console codepage (some PowerShell 5.1 / Windows console host
+# combinations ignore chcp 65001 and decode output as cp1252, producing mojibake).
 $host.UI.RawUI.WindowTitle = "PNWC Remediation Tool v2.3"
 
 Clear-Host
 Write-Host ""
-Write-Host "  ██████╗ ███╗   ██╗██╗    ██╗ ██████╗ " -ForegroundColor Cyan
-Write-Host "  ██╔══██╗████╗  ██║██║    ██║██╔════╝ " -ForegroundColor Cyan
-Write-Host "  ██████╔╝██╔██╗ ██║██║ █╗ ██║██║      " -ForegroundColor Cyan
-Write-Host "  ██╔═══╝ ██║╚██╗██║██║███╗██║██║      " -ForegroundColor Cyan
-Write-Host "  ██║     ██║ ╚████║╚███╔███╔╝╚██████╗ " -ForegroundColor Cyan
-Write-Host "  ╚═╝     ╚═╝  ╚═══╝ ╚══╝╚══╝  ╚═════╝ " -ForegroundColor Cyan
+Write-Host "  ######   ##  ##   ##    ##   ######" -ForegroundColor Cyan
+Write-Host "  ##  ##   ### ##   ##    ##   ##    " -ForegroundColor Cyan
+Write-Host "  ######   ######   ## ## ##   ##    " -ForegroundColor Cyan
+Write-Host "  ##       ## ###   ########   ##    " -ForegroundColor Cyan
+Write-Host "  ##       ##  ##   ##    ##   ######" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Pacific Northwest Computers" -ForegroundColor White
 Write-Host "  Malware Remediation Toolkit" -ForegroundColor DarkGray
