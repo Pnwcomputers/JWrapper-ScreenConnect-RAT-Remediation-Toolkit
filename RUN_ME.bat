@@ -2,7 +2,7 @@
 :: Set UTF-8 codepage so PowerShell Unicode box-drawing characters render correctly
 chcp 65001 >nul 2>&1
 color 0B
-title PNWC Intrusion Response Toolkit v2.2
+title PNWC Intrusion Response Toolkit v2.3
 
 echo ================================================================
 echo   PNWC Intrusion Response Toolkit
@@ -91,9 +91,9 @@ if /i NOT "%CONFIRM%"=="YES" (
 )
 color 0C
 echo.
-echo [*] Launching Fix.ps1...
+echo [*] Launching fix.ps1...
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Fix.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0fix.ps1"
 echo.
 echo ================================================================
 echo   Remediation complete. A report file has been saved.
