@@ -506,8 +506,9 @@ try {
 # ════════════════════════════════════════════════════════════
 Write-Log ""
 Write-Log "--- STEP 9: Post-Remediation Verification ---" "Cyan"
-$Issues = 0
-$VerifyResults = [System.Collections.Generic.List[string]]::new()
+$script:Issues = 0
+$script:VerifyResults = [System.Collections.Generic.List[string]]::new()
+$script:clickOnceClean = $true
 
 $Checks = @{
     "Service: Remote Access Service"           = { Get-Service "Remote Access Service" -ErrorAction SilentlyContinue }
@@ -522,17 +523,16 @@ $Checks = @{
 foreach ($check in $Checks.Keys) {
     $result = & $Checks[$check]
     if ($result) {
-        $Issues++
+        $script:Issues++
         Write-Log "  [!] STILL PRESENT: $check" "Red"
-        $VerifyResults.Add("  [STILL PRESENT]  $check")
+        $script:VerifyResults.Add("  [STILL PRESENT]  $check")
     } else {
         Write-Log "  [OK] Cleared: $check" "Green"
-        $VerifyResults.Add("  [CLEAR]          $check")
+        $script:VerifyResults.Add("  [CLEAR]          $check")
     }
 }
 
 # Check if any ClickOnce campaign tokens remain
-$clickOnceClean = $true
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
     $coPath = Join-Path $_.FullName "AppData\Local\Apps\2.0"
     if (Test-Path $coPath) {
@@ -545,15 +545,15 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
                 $_.Name -like "*b15b0581876c57b7*"        # v15.x oldest observed
             }
         if ($remaining) {
-            $clickOnceClean = $false
-            $Issues++
-            $VerifyResults.Add("  [STILL PRESENT]  ClickOnce campaign token dirs in: $coPath")
+            $script:clickOnceClean = $false
+            $script:Issues++
+            $script:VerifyResults.Add("  [STILL PRESENT]  ClickOnce campaign token dirs in: $coPath")
             Write-Log "  [!] STILL PRESENT: ClickOnce campaign dirs in $coPath" "Red"
         }
     }
 }
-if ($clickOnceClean) {
-    $VerifyResults.Add("  [CLEAR]          ClickOnce cache (no campaign tokens found)")
+if ($script:clickOnceClean) {
+    $script:VerifyResults.Add("  [CLEAR]          ClickOnce cache (no campaign tokens found)")
     Write-Log "  [OK] Cleared: ClickOnce cache" "Green"
 }
 
@@ -563,10 +563,10 @@ if ($clickOnceClean) {
 # Verification is based on Step 7 outcome, not a re-query.
 if ($ps4104Hits.Count -gt 0) {
     # Step 7 found and cleared entries -- mark as clean based on successful wevtutil cl
-    $VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (documented and log cleared in Step 7)")
+    $script:VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (documented and log cleared in Step 7)")
     Write-Log "  [OK] Cleared: PowerShell 4104 campaign entries (Step 7 documented and cleared $($ps4104Hits.Count) entries)" "Green"
 } else {
-    $VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (none present)")
+    $script:VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (none present)")
     Write-Log "  [OK] Cleared: PowerShell 4104 campaign entries (none found)" "Green"
 }
 
