@@ -491,20 +491,57 @@ try {
 Write-Log ""
 Write-Log "--- STEP 8: Removing Windows Defender Exclusions Added by Malware ---" "Cyan"
 # SILENTCONNECT adds an ExclusionExtension for .exe during delivery
-# to prevent Defender from scanning the ScreenConnect installer
+# to prevent Defender from scanning the ScreenConnect installer.
+#
+# If a third-party AV is the active endpoint protection, or the WinDefend
+# service is stopped/disabled, Get-MpPreference fails with HRESULT 0x800106BA
+# (WMI/MI provider failure). That's a "not applicable" condition, not a
+# remediation failure -- we log it gracefully and move on.
+
+# Pre-check: is Defender actually reachable on this system?
+$defenderReachable = $false
+$defenderSkipReason = $null
 try {
-    $currentExclusions = (Get-MpPreference -ErrorAction Stop).ExclusionExtension
-    if ($currentExclusions -and $currentExclusions -contains ".exe") {
-        Remove-MpPreference -ExclusionExtension ".exe" -ErrorAction Stop
-        Write-Log "  [OK] Removed Defender .exe extension exclusion (added by SILENTCONNECT during delivery)" "Green"
-        Log-Removed "Windows Defender ExclusionExtension: .exe"
+    $winDefSvc = Get-Service -Name WinDefend -ErrorAction Stop
+    if ($winDefSvc.Status -eq 'Running') {
+        $defenderReachable = $true
     } else {
-        Write-Log "  [--] No .exe Defender exclusion found" "DarkGray"
-        Log-NotFound "Defender .exe exclusion (not present)"
+        $defenderSkipReason = "WinDefend service status is '$($winDefSvc.Status)' (not Running)"
     }
 } catch {
-    Write-Log "  [!] Could not check/remove Defender exclusions: $($_.Exception.Message)" "Red"
-    Log-Failed "Defender exclusion removal"
+    $defenderSkipReason = "WinDefend service not installed or inaccessible"
+}
+
+if (-not $defenderReachable) {
+    Write-Log "  [--] Windows Defender not active on this system -- skipping" "DarkGray"
+    Write-Log "      Reason: $defenderSkipReason" "Gray"
+    Write-Log "      (Third-party AV present, or Defender disabled by policy.)" "Gray"
+    Log-NotFound "Defender exclusion check (Defender not active: $defenderSkipReason)"
+} else {
+    try {
+        $currentExclusions = (Get-MpPreference -ErrorAction Stop).ExclusionExtension
+        if ($currentExclusions -and $currentExclusions -contains ".exe") {
+            Remove-MpPreference -ExclusionExtension ".exe" -ErrorAction Stop
+            Write-Log "  [OK] Removed Defender .exe extension exclusion (added by SILENTCONNECT during delivery)" "Green"
+            Log-Removed "Windows Defender ExclusionExtension: .exe"
+        } else {
+            Write-Log "  [--] No .exe Defender exclusion found" "DarkGray"
+            Log-NotFound "Defender .exe exclusion (not present)"
+        }
+    } catch {
+        $errMsg = $_.Exception.Message
+        # 0x800106BA is the canonical Defender-unreachable signature; the
+        # service may have stopped between our pre-check and the cmdlet call,
+        # or tamper protection may be blocking the MI provider. Treat as N/A.
+        if ($errMsg -match '0x800106BA') {
+            Write-Log "  [--] Defender MI provider unreachable (0x800106BA) -- skipping" "DarkGray"
+            Write-Log "      (Service stopped mid-run, or tamper protection blocking MI access.)" "Gray"
+            Log-NotFound "Defender exclusion check (MI provider unreachable, 0x800106BA)"
+        } else {
+            Write-Log "  [!] Could not check/remove Defender exclusions: $errMsg" "Red"
+            Log-Failed "Defender exclusion removal"
+        }
+    }
 }
 
 
