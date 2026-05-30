@@ -43,6 +43,13 @@ $RemovedItems  = [System.Collections.Generic.List[string]]::new()
 $FailedItems   = [System.Collections.Generic.List[string]]::new()
 $NotFoundItems = [System.Collections.Generic.List[string]]::new()
 
+# Hoisted from Step 9 -- guarantee these are defined even if Step 9
+# aborts mid-flight (terminating errors bypass SilentlyContinue and would
+# otherwise leave the summary block reading $null -> phantom "failure" status).
+$script:Issues         = 0
+$script:VerifyResults  = [System.Collections.Generic.List[string]]::new()
+$script:clickOnceClean = $true
+
 function Write-Log {
     param([string]$Msg, [string]$Color = "White")
     $entry = "[$(Get-Date -Format 'HH:mm:ss')]  $Msg"
@@ -506,9 +513,9 @@ try {
 # ════════════════════════════════════════════════════════════
 Write-Log ""
 Write-Log "--- STEP 9: Post-Remediation Verification ---" "Cyan"
-$script:Issues = 0
-$script:VerifyResults = [System.Collections.Generic.List[string]]::new()
-$script:clickOnceClean = $true
+# $script:Issues, $script:VerifyResults, $script:clickOnceClean are
+# initialized at the top of the script so this block remains safe even
+# if it gets re-entered or partially aborts.
 
 $Checks = @{
     "Service: Remote Access Service"           = { Get-Service "Remote Access Service" -ErrorAction SilentlyContinue }
@@ -579,14 +586,17 @@ Write-Log ("=" * 70) "DarkCyan"
 Write-Log "  REMEDIATION COMPLETE" "Cyan"
 Write-Log ("=" * 70) "DarkCyan"
 Write-Log ""
-if ($Issues -eq 0) {
+# Snapshot the count and coerce defensively so this block can never
+# produce "STATUS :  item(s) could not be removed." (blank number).
+$issueCount = [int]($script:Issues)
+if ($issueCount -le 0) {
     Write-Log "  STATUS : All verified indicators removed successfully." "Green"
     Write-Log "  *** REBOOT THIS MACHINE NOW ***" "Yellow"
     Write-Log ""
     Write-Log "  After rebooting, run system_check.ps1 to confirm clean." "White"
     Write-Log "  Then change ALL passwords used on this machine." "White"
 } else {
-    Write-Log "  STATUS : $Issues item(s) could not be removed." "Red"
+    Write-Log "  STATUS : $issueCount item(s) could not be removed." "Red"
     Write-Log "  Review output above. Reboot and re-run, or contact PNWC." "Yellow"
 }
 Write-Log ""
@@ -597,8 +607,8 @@ Write-Log ("=" * 70) "DarkCyan"
 # ════════════════════════════════════════════════════════════
 # SAVE REPORT FILE
 # ════════════════════════════════════════════════════════════
-$statusText = if ($Issues -eq 0) { "ALL DETECTED ITEMS REMOVED -- Reboot required to complete cleanup" }
-              else               { "INCOMPLETE -- $Issues item(s) could not be removed, see details below" }
+$statusText = if ($issueCount -le 0) { "ALL DETECTED ITEMS REMOVED -- Reboot required to complete cleanup" }
+              else                   { "INCOMPLETE -- $issueCount item(s) could not be removed, see details below" }
 
 $divider = "=" * 70
 
@@ -687,7 +697,7 @@ $divider
 POST-REMEDIATION VERIFICATION RESULTS
 $divider
 
-$($VerifyResults | Out-String)
+$($script:VerifyResults | Out-String)
 $divider
 REQUIRED NEXT STEPS
 $divider
