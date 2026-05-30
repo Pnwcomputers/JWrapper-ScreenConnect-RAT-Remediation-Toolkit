@@ -23,6 +23,11 @@
 #>
 
 #Requires -RunAsAdministrator
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Scope='Function', Target='Log-Removed')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Scope='Function', Target='Log-Failed')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Scope='Function', Target='Log-NotFound')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Scope='Variable', Target='clickOnceClean')]
+param()
 # Set UTF-8 output encoding so box-drawing characters render correctly
 # Works whether launched via RUN_ME.bat (chcp 65001) or directly from PowerShell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -44,6 +49,7 @@ function Write-Log {
     Write-Host $entry -ForegroundColor $Color
     $ActionLog.Add($entry)
 }
+
 function Log-Removed  { param([string]$I); $RemovedItems.Add("  [REMOVED]      $I") }
 function Log-Failed   { param([string]$I); $FailedItems.Add("  [FAILED]       $I") }
 function Log-NotFound { param([string]$I); $NotFoundItems.Add("  [NOT FOUND]    $I") }
@@ -71,15 +77,32 @@ $host.UI.RawUI.WindowTitle = "PNWC Remediation Tool v2.3"
 
 Clear-Host
 Write-Host ""
-Write-Host "  ____  _   ___        ______  " -ForegroundColor Cyan
-Write-Host " |  _ \| \ | \ \      / / ___| " -ForegroundColor Cyan
-Write-Host " | |_) |  \| |\ \ /\ / /| |    " -ForegroundColor Cyan
-Write-Host " |  __/| |\  | \ V  V / | |___ " -ForegroundColor Cyan
-Write-Host " |_|   |_| \_|  \_/\_/   \____| " -ForegroundColor Cyan
+Write-Host "  ██████╗ ███╗   ██╗██╗    ██╗ ██████╗ " -ForegroundColor Cyan
+Write-Host "  ██╔══██╗████╗  ██║██║    ██║██╔════╝ " -ForegroundColor Cyan
+Write-Host "  ██████╔╝██╔██╗ ██║██║ █╗ ██║██║      " -ForegroundColor Cyan
+Write-Host "  ██╔═══╝ ██║╚██╗██║██║███╗██║██║      " -ForegroundColor Cyan
+Write-Host "  ██║     ██║ ╚████║╚███╔███╔╝╚██████╗ " -ForegroundColor Cyan
+Write-Host "  ╚═╝     ╚═╝  ╚═══╝ ╚══╝╚══╝  ╚═════╝ " -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Pacific Northwest Computers" -ForegroundColor White
 Write-Host "  Malware Remediation Toolkit" -ForegroundColor DarkGray
 Write-Host ""
+Write-Host ("=" * 70) -ForegroundColor DarkCyan
+Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
+Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
+Write-Host "   v2.3 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
+Write-Host ("=" * 70) -ForegroundColor DarkCyan
+Write-Host ""
+Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
+Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
+Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
+Write-Host ""
+$ActionLog.Add("PNWC Remediation Tool v2.3 -- JWrapper/ScreenConnect (SILENTCONNECT)")
+$ActionLog.Add("Started : $(Get-Date)")
+$ActionLog.Add("Computer: $env:COMPUTERNAME")
+$ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
+$ActionLog.Add("Operator: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)")
+$ActionLog.Add(("=" * 70))
 
 # ════════════════════════════════════════════════════════════
 # STEP 1 — KILL PROCESSES
@@ -176,7 +199,7 @@ foreach ($key in $RegKeys) {
             Log-Removed "Registry: $key"
         } catch {
             Write-Log "  [!] Failed to remove: $key  ($($_.Exception.Message))" "Red"
-            $regPath = $key -replace "HKLM:\\","HKLM\" -replace "HKCU:\\","HKCU\"
+            $regPath = $key -replace "HKLM:\\","HKLM\\" -replace "HKCU:\\","HKCU\\"
             reg.exe delete $regPath /f 2>&1 | Out-Null
             Log-Failed "Registry: $key"
         }
@@ -514,7 +537,13 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
     $coPath = Join-Path $_.FullName "AppData\Local\Apps\2.0"
     if (Test-Path $coPath) {
         $remaining = Get-ChildItem -Path $coPath -Recurse -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -like "*27fa83f1ad328157*" -or $_.Name -like "*420d02d3849b7992*" }
+            Where-Object {
+                $_.Name -like "*27fa83f1ad328157*" -or   # v25.x April 2026 wave
+                $_.Name -like "*420d02d3849b7992*" -or   # v25.x Core/Windows DLL
+                $_.Name -like "*1eba6b14258ee2ac*" -or   # v19.x 2025 payload
+                $_.Name -like "*25b0fbb6ef7eb094*" -or   # v17-18.x 2021-2024
+                $_.Name -like "*b15b0581876c57b7*"        # v15.x oldest observed
+            }
         if ($remaining) {
             $clickOnceClean = $false
             $Issues++
