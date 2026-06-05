@@ -158,7 +158,7 @@ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remote Access
 
 | Address / Hostname | Resolved IP(s) | Port | Campaign Wave | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77` | `8041` | April 2026 | **Cross-victim confirmed — multiple victims 2 hrs apart** |
+| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77`, `147.75.50.76` | `8041` | 2025–2026 | **Cross-victim confirmed — multiple victims 2 hrs apart; IP rotated** |
 | `instance-fc5xev-relay.screenconnect.com` | `147.28.146.148` | `8041` | 2024 | Earlier campaign wave |
 | `gqpplgq2g.anondns.net` | Dynamic | `8041` | March–April 2026 | Anonymous dynamic DNS — original documented case |
 | `instance-zayrhg-relay.screenconnect.com` | See table below | `8041` | 2023–2026 | Long-running relay — 3+ year persistence on one network |
@@ -195,6 +195,21 @@ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remote Access
 | `139.178.89.208` | Jan 2023 (earliest observed) |
 | `139.178.89.96` | Oct 2023 |
 | `139.178.89.228` | Sep 2024 |
+
+#### instance-sis2tc IP Rotation History (field-confirmed)
+
+| IP | Date Observed |
+| :--- | :--- |
+| `147.75.50.76` | Feb 6, 2025 |
+| `15.204.131.77` | April 2026 (cross-victim confirmed) |
+
+#### instance-wrnmil (field-confirmed — March–October 2023)
+
+| IP | Date Observed |
+| :--- | :--- |
+| `147.28.129.152` | Mar 24, 2023 – Oct 9, 2023 |
+
+> `instance-wrnmil` ran concurrently with `instance-zayrhg` on the same victim machine — confirmed in the same `user.config` HostToAddressMap. Same operator template (identical app.config stealth flags). Assembly token `25b0fbb6ef7eb094`.
 
 > **Cross-victim attribution:** `15.204.131.77` (instance-sis2tc) is confirmed in the `user.config` HostToAddressMap of at least two independent victims, with connection timestamps 2 hours apart on April 29, 2026. This is direct evidence of a coordinated campaign, not coincidence.
 
@@ -317,8 +332,30 @@ SG_3243431771723114121
 | `27fa83f1ad328157` | v25.2.4.9229 / v25.x | April 2026 campaign wave — present across all confirmed 2026 victims |
 | `420d02d3849b7992` | v25.2.4.9229 / v25.x | Core/Windows DLL token — same build as above |
 | `1eba6b14258ee2ac` | v19.x (2025 payload) | Server and workstations — 2025 upgrade wave |
+| `4b14c015c87c1ad8` | v18.x (intermediate) | Found on DESKTOP-8HF24LF — between v17-18 and v19 builds |
 | `25b0fbb6ef7eb094` | v17.x–v18.x | Early campaign payload — 2021–2024 |
 | `b15b0581876c57b7` | v15.x | Oldest observed payload — 2021–2022 |
+
+### Confirmed ScreenConnect Instance IDs
+
+| Instance ID | Relay | Notes |
+| :--- | :--- | :--- |
+| `3d3b2f272279de02` | `instance-sis2tc` | Confirmed campaign — WindowsAuthenticationPackage.dll hash match |
+| `fd116df82d4badf8` | `instance-c7gab0` | Confirmed campaign — WindowsAuthenticationPackage.dll hash match |
+| `e79a68f16cd026b7` | Unknown | MANAGER machine dedicated instance |
+
+### Additional Field-Verified SHA-256 Hashes (3d3b2f27 build)
+
+| Filename | SHA-256 |
+| :--- | :--- |
+| `ScreenConnect.Client.dll` | `58c2a5a5715d184ba950bc3b5ae1f60e9c91c55967f565b7bd7a56214f7cabcf` |
+| `ScreenConnect.ClientService.exe` | `2501a8d67ee3319eede8b608f416ff024986814795aad358440a530bd6495cc6` |
+| `ScreenConnect.Core.dll` | `1f65972ec1687b8a56695587f48b90b69842e68fcdb3e41d07ae86a1c666e349` |
+| `ScreenConnect.Windows.dll` | `ed1d3795180edc2cf0a18c5245b4219a431fe84a00c0f4faff7864e6ac7f6380` |
+| `ScreenConnect.WindowsBackstageShell.exe` | `b8c500374de91f654a23960045119f07f7a70bf9ce81822771df96d32c5a22da` |
+| `ScreenConnect.WindowsClient.exe` | `b4851e7096d7bcf11524d21839a30b98b48f39d84009a76071d2020ea91d672f` |
+| `ScreenConnect.WindowsCredentialProvider.dll` | `5a5a7a5c7e0d6873d9dc8ec3fff58870697ccf53faab4f5e75a5b04a4e8b4702` |
+| `ScreenConnect.WindowsFileManager.exe` | `9fcabe97f7287e87537c9757dc469756093a93b2ef5b31b43135738240140cb2` |
 
 ### JWrapper Package Versions
 
@@ -398,6 +435,7 @@ The following processes were observed on infected machines but are **legitimate 
 | Collection | T1056.001 | Keylogging — capability present via active remote desktop control |
 | Exfiltration | T1041 | Exfiltration over C2 Channel — Zstandard-compressed uploads |
 | Lateral Movement | T1021 | Remote Services — SYSTEM-level access enables local network pivot |
+| Lateral Movement | T1572 | Protocol Tunneling — attacker enables VPN firewall rules (L2TP/PPTP/GRE) on victim workstations to establish tunnel or pivot; confirmed on multiple machines across multiple businesses |
 | Injection | T1055 | Process Injection — `CreateRemoteThread` in `jwutils_win32/64.dll` |
 | Discovery | T1518.001 | Security Software Discovery — WMI polls for `MBAMService` and `WinDefend` |
 
@@ -412,6 +450,7 @@ The following processes were observed on infected machines but are **legitimate 
 - **Redundant C2:** Three JWrapper relay servers are registered simultaneously; if one is unreachable the RAT fails over automatically, with no single point of failure for the attacker
 - **Self-updating:** `GenericUpdater` component checks for and applies RAT updates from C2 servers on an ongoing basis
 - **Pulseway pre-staging observed:** In at least one victim, the `%APPDATA%\MMSOFT Design\Pulseway\working\` directory was created approximately **one month before** the ScreenConnect infection, suggesting Pulseway may have been used as a reconnaissance or initial access tool in a prior stage
+- **VPN protocol firewall rules:** Attacker adds `Routing and Remote Access` rules for L2TP-In/Out, PPTP-In/Out, and GRE-In/Out — confirmed on multiple machines across at least two separate businesses. Enables VPN tunneling or lateral movement via VPN protocols. No legitimate workstation purpose.
 
 ---
 
@@ -428,6 +467,8 @@ The following processes were observed on infected machines but are **legitimate 
 | April 29, 2026 20:15 UTC | Victim "Enver" — re-infected / upgraded to current payload (`instance-sis2tc` / `15.204.131.77`) |
 | April 29, 2026 22:18 UTC | Victim "Emina" — infected with identical payload, same C2 relay, ~2 hours later |
 | May 2026 | 4+ additional victims identified in same geographic area; campaign confirmed active |
+| May 29, 2026 | Second confirmed business — MANAGER, multiple workstations remediated; VPN firewall rules found |
+| June 3, 2026 | Third confirmed business (Furniture World) — NUCBOX_M5PLUS, SALES2, DESKTOP-8HF24LF detected and remediated; VPN firewall rules confirmed again |
 
 ### Business Network — Multi-Machine Long-Term Compromise
 
