@@ -16,18 +16,13 @@
 .NOTES
     Author  : Pacific Northwest Computers
     Contact : jon@pnwcomputers.com | 360-624-7379
-    Version : 2.4.0
+    Version : 2.2
     Updated : May 2026 -- added ClickOnce cache purge, VBScript staging files,
               SILENTCONNECT delivery artifacts, Defender exclusion removal,
               new process aliases, updated firewall block list
 #>
 
 #Requires -RunAsAdministrator
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Scope='Function', Target='Log-Removed')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Scope='Function', Target='Log-Failed')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Scope='Function', Target='Log-NotFound')]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Scope='Variable', Target='clickOnceClean')]
-param()
 # Set UTF-8 output encoding so box-drawing characters render correctly
 # Works whether launched via RUN_ME.bat (chcp 65001) or directly from PowerShell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -43,20 +38,12 @@ $RemovedItems  = [System.Collections.Generic.List[string]]::new()
 $FailedItems   = [System.Collections.Generic.List[string]]::new()
 $NotFoundItems = [System.Collections.Generic.List[string]]::new()
 
-# Hoisted from Step 9 -- guarantee these are defined even if Step 9
-# aborts mid-flight (terminating errors bypass SilentlyContinue and would
-# otherwise leave the summary block reading $null -> phantom "failure" status).
-$script:Issues         = 0
-$script:VerifyResults  = [System.Collections.Generic.List[string]]::new()
-$script:clickOnceClean = $true
-
 function Write-Log {
     param([string]$Msg, [string]$Color = "White")
     $entry = "[$(Get-Date -Format 'HH:mm:ss')]  $Msg"
     Write-Host $entry -ForegroundColor $Color
     $ActionLog.Add($entry)
 }
-
 function Log-Removed  { param([string]$I); $RemovedItems.Add("  [REMOVED]      $I") }
 function Log-Failed   { param([string]$I); $FailedItems.Add("  [FAILED]       $I") }
 function Log-NotFound { param([string]$I); $NotFoundItems.Add("  [NOT FOUND]    $I") }
@@ -78,38 +65,24 @@ function Remove-LockedPath {
 }
 
 # ── Banner ────────────────────────────────────────────────────────────────────
-# Pure-ASCII banner. Avoids UTF-8 box-drawing chars so this renders correctly
-# regardless of console codepage (some PowerShell 5.1 / Windows console host
-# combinations ignore chcp 65001 and decode output as cp1252, producing mojibake).
-$host.UI.RawUI.WindowTitle = "PNWC Remediation Tool v2.4.0"
-
 Clear-Host
-Write-Host ""
-Write-Host "  ######   ##  ##   ##    ##   ######" -ForegroundColor Cyan
-Write-Host "  ##  ##   ### ##   ##    ##   ##    " -ForegroundColor Cyan
-Write-Host "  ######   ######   ## ## ##   ##    " -ForegroundColor Cyan
-Write-Host "  ##       ## ###   ########   ##    " -ForegroundColor Cyan
-Write-Host "  ##       ##  ##   ##    ##   ######" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "  Pacific Northwest Computers" -ForegroundColor White
-Write-Host "  Malware Remediation Toolkit" -ForegroundColor DarkGray
-Write-Host ""
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
 Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
 Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
-Write-Host "   v2.4.0 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
+Write-Host "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
 Write-Host ("=" * 70) -ForegroundColor DarkCyan
 Write-Host ""
 Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
 Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
 Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
 Write-Host ""
-$ActionLog.Add("PNWC Remediation Tool v2.4.0 -- JWrapper/ScreenConnect (SILENTCONNECT)")
+$ActionLog.Add("PNWC Remediation Tool v2.2 -- JWrapper/ScreenConnect (SILENTCONNECT)")
 $ActionLog.Add("Started : $(Get-Date)")
 $ActionLog.Add("Computer: $env:COMPUTERNAME")
 $ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
 $ActionLog.Add("Operator: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)")
 $ActionLog.Add(("=" * 70))
+
 
 # ════════════════════════════════════════════════════════════
 # STEP 1 — KILL PROCESSES
@@ -120,7 +93,7 @@ $BadProcs = @(
     "Remote Access Service",        # space-variant alias (confirmed in ETL traces)
     "Remote_Access_Configure",
     "Remote_Access_Launcher",
-    "Remote_AccessWinLauncher",     # JWrapper Windows launcher component (v2.4.0 addition)
+    "Remote_AccessWinLauncher",     # JWrapper Windows launcher component (v2.2 addition)
     "SimpleService",
     "StopSimpleGatewayService",
     "ScreenConnect.WindowsClient",
@@ -206,7 +179,7 @@ foreach ($key in $RegKeys) {
             Log-Removed "Registry: $key"
         } catch {
             Write-Log "  [!] Failed to remove: $key  ($($_.Exception.Message))" "Red"
-            $regPath = $key -replace "HKLM:\\","HKLM\\" -replace "HKCU:\\","HKCU\\"
+            $regPath = $key -replace "HKLM:\\","HKLM\" -replace "HKCU:\\","HKCU\"
             reg.exe delete $regPath /f 2>&1 | Out-Null
             Log-Failed "Registry: $key"
         }
@@ -267,7 +240,7 @@ foreach ($path in $PrimaryPaths) {
     }
 }
 
-# ClickOnce cache -- remove ScreenConnect entries per-user (v2.4.0 addition)
+# ClickOnce cache -- remove ScreenConnect entries per-user (v2.2 addition)
 Write-Log "  [*] Scanning ClickOnce cache for ScreenConnect artifacts..." "Yellow"
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
     $coPath = Join-Path $_.FullName "AppData\Local\Apps\2.0"
@@ -279,6 +252,7 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
                 $_.Name -like "*420d02d3849b7992*" -or   # v25.x Core/Windows DLL
                 $_.Name -like "*1eba6b14258ee2ac*" -or   # v19.x 2025 payload
                 $_.Name -like "*25b0fbb6ef7eb094*" -or   # v17-18.x 2021-2024
+                $_.Name -like "*4b14c015c87c1ad8*" -or   # v18.x intermediate payload
                 $_.Name -like "*b15b0581876c57b7*"        # v15.x oldest observed
             } |
             ForEach-Object {
@@ -296,7 +270,7 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
     }
 }
 
-# SILENTCONNECT variant staging files (v2.4.0 addition)
+# SILENTCONNECT variant staging files (v2.2 addition)
 $StagingFiles = @(
     "C:\Windows\Temp\FileR.txt",                          # C# payload staging file
     "C:\Temp\ScreenConnect.ClientSetup.msi",              # MSI staging path
@@ -320,7 +294,7 @@ foreach ($f in $StagingFiles) {
     }
 }
 
-# VBScript delivery files in common locations (v2.4.0 addition)
+# VBScript delivery files in common locations (v2.2 addition)
 $VbsPatterns = @(
     "$env:USERPROFILE\Downloads\E-INVITE.vbs",
     "$env:USERPROFILE\Downloads\Proposal-*.vbs",
@@ -394,6 +368,7 @@ $C2BlockIPs = @{
     "147.45.218.13"  = "JWrapper C2 redundant relay"
     # instance-sis2tc
     "15.204.131.77"  = "ScreenConnect C2 relay (instance-sis2tc) -- April 2026 campaign"
+    "147.75.50.76"   = "ScreenConnect C2 relay (instance-sis2tc) -- Feb 2025 IP rotation"
     "147.28.146.148" = "ScreenConnect C2 relay (instance-fc5xev) -- 2024 campaign wave"
     # instance-zayrhg (2023-2026)
     "15.204.48.24"   = "ScreenConnect C2 relay (instance-zayrhg) -- Mar-Aug 2026"
@@ -414,6 +389,8 @@ $C2BlockIPs = @{
     "139.178.89.208" = "ScreenConnect C2 relay (instance-xbirmk) -- Jan 2023"
     "139.178.89.96"  = "ScreenConnect C2 relay (instance-xbirmk) -- Oct 2023"
     "139.178.89.228" = "ScreenConnect C2 relay (instance-xbirmk) -- Sep 2024"
+    # instance-wrnmil (2023)
+    "147.28.129.152" = "ScreenConnect C2 relay (instance-wrnmil) -- Mar-Oct 2023"
     # SILENTCONNECT delivery
     "86.38.225.59"   = "bumptobabeco.top -- SILENTCONNECT delivery server, Lithuania"
 }
@@ -427,7 +404,7 @@ foreach ($ip in $C2BlockIPs.Keys) {
                 -RemoteAddress $ip `
                 -Protocol Any `
                 -Enabled True `
-                -Description "PNWC Remediation v2.4.0 -- Block $($C2BlockIPs[$ip])" `
+                -Description "PNWC Remediation v2.2 -- Block $($C2BlockIPs[$ip])" `
                 -ErrorAction Stop | Out-Null
             Write-Log "  [OK] Added outbound block rule for: $ip ($($C2BlockIPs[$ip]))" "Green"
             Log-Removed "Firewall block added for C2 IP: $ip"
@@ -491,57 +468,20 @@ try {
 Write-Log ""
 Write-Log "--- STEP 8: Removing Windows Defender Exclusions Added by Malware ---" "Cyan"
 # SILENTCONNECT adds an ExclusionExtension for .exe during delivery
-# to prevent Defender from scanning the ScreenConnect installer.
-#
-# If a third-party AV is the active endpoint protection, or the WinDefend
-# service is stopped/disabled, Get-MpPreference fails with HRESULT 0x800106BA
-# (WMI/MI provider failure). That's a "not applicable" condition, not a
-# remediation failure -- we log it gracefully and move on.
-
-# Pre-check: is Defender actually reachable on this system?
-$defenderReachable = $false
-$defenderSkipReason = $null
+# to prevent Defender from scanning the ScreenConnect installer
 try {
-    $winDefSvc = Get-Service -Name WinDefend -ErrorAction Stop
-    if ($winDefSvc.Status -eq 'Running') {
-        $defenderReachable = $true
+    $currentExclusions = (Get-MpPreference -ErrorAction Stop).ExclusionExtension
+    if ($currentExclusions -and $currentExclusions -contains ".exe") {
+        Remove-MpPreference -ExclusionExtension ".exe" -ErrorAction Stop
+        Write-Log "  [OK] Removed Defender .exe extension exclusion (added by SILENTCONNECT during delivery)" "Green"
+        Log-Removed "Windows Defender ExclusionExtension: .exe"
     } else {
-        $defenderSkipReason = "WinDefend service status is '$($winDefSvc.Status)' (not Running)"
+        Write-Log "  [--] No .exe Defender exclusion found" "DarkGray"
+        Log-NotFound "Defender .exe exclusion (not present)"
     }
 } catch {
-    $defenderSkipReason = "WinDefend service not installed or inaccessible"
-}
-
-if (-not $defenderReachable) {
-    Write-Log "  [--] Windows Defender not active on this system -- skipping" "DarkGray"
-    Write-Log "      Reason: $defenderSkipReason" "Gray"
-    Write-Log "      (Third-party AV present, or Defender disabled by policy.)" "Gray"
-    Log-NotFound "Defender exclusion check (Defender not active: $defenderSkipReason)"
-} else {
-    try {
-        $currentExclusions = (Get-MpPreference -ErrorAction Stop).ExclusionExtension
-        if ($currentExclusions -and $currentExclusions -contains ".exe") {
-            Remove-MpPreference -ExclusionExtension ".exe" -ErrorAction Stop
-            Write-Log "  [OK] Removed Defender .exe extension exclusion (added by SILENTCONNECT during delivery)" "Green"
-            Log-Removed "Windows Defender ExclusionExtension: .exe"
-        } else {
-            Write-Log "  [--] No .exe Defender exclusion found" "DarkGray"
-            Log-NotFound "Defender .exe exclusion (not present)"
-        }
-    } catch {
-        $errMsg = $_.Exception.Message
-        # 0x800106BA is the canonical Defender-unreachable signature; the
-        # service may have stopped between our pre-check and the cmdlet call,
-        # or tamper protection may be blocking the MI provider. Treat as N/A.
-        if ($errMsg -match '0x800106BA') {
-            Write-Log "  [--] Defender MI provider unreachable (0x800106BA) -- skipping" "DarkGray"
-            Write-Log "      (Service stopped mid-run, or tamper protection blocking MI access.)" "Gray"
-            Log-NotFound "Defender exclusion check (MI provider unreachable, 0x800106BA)"
-        } else {
-            Write-Log "  [!] Could not check/remove Defender exclusions: $errMsg" "Red"
-            Log-Failed "Defender exclusion removal"
-        }
-    }
+    Write-Log "  [!] Could not check/remove Defender exclusions: $($_.Exception.Message)" "Red"
+    Log-Failed "Defender exclusion removal"
 }
 
 
@@ -550,9 +490,8 @@ if (-not $defenderReachable) {
 # ════════════════════════════════════════════════════════════
 Write-Log ""
 Write-Log "--- STEP 9: Post-Remediation Verification ---" "Cyan"
-# $script:Issues, $script:VerifyResults, $script:clickOnceClean are
-# initialized at the top of the script so this block remains safe even
-# if it gets re-entered or partially aborts.
+$Issues = 0
+$VerifyResults = [System.Collections.Generic.List[string]]::new()
 
 $Checks = @{
     "Service: Remote Access Service"           = { Get-Service "Remote Access Service" -ErrorAction SilentlyContinue }
@@ -567,37 +506,32 @@ $Checks = @{
 foreach ($check in $Checks.Keys) {
     $result = & $Checks[$check]
     if ($result) {
-        $script:Issues++
+        $Issues++
         Write-Log "  [!] STILL PRESENT: $check" "Red"
-        $script:VerifyResults.Add("  [STILL PRESENT]  $check")
+        $VerifyResults.Add("  [STILL PRESENT]  $check")
     } else {
         Write-Log "  [OK] Cleared: $check" "Green"
-        $script:VerifyResults.Add("  [CLEAR]          $check")
+        $VerifyResults.Add("  [CLEAR]          $check")
     }
 }
 
 # Check if any ClickOnce campaign tokens remain
+$clickOnceClean = $true
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
     $coPath = Join-Path $_.FullName "AppData\Local\Apps\2.0"
     if (Test-Path $coPath) {
         $remaining = Get-ChildItem -Path $coPath -Recurse -Directory -ErrorAction SilentlyContinue |
-            Where-Object {
-                $_.Name -like "*27fa83f1ad328157*" -or   # v25.x April 2026 wave
-                $_.Name -like "*420d02d3849b7992*" -or   # v25.x Core/Windows DLL
-                $_.Name -like "*1eba6b14258ee2ac*" -or   # v19.x 2025 payload
-                $_.Name -like "*25b0fbb6ef7eb094*" -or   # v17-18.x 2021-2024
-                $_.Name -like "*b15b0581876c57b7*"        # v15.x oldest observed
-            }
+            Where-Object { $_.Name -like "*27fa83f1ad328157*" -or $_.Name -like "*420d02d3849b7992*" }
         if ($remaining) {
-            $script:clickOnceClean = $false
-            $script:Issues++
-            $script:VerifyResults.Add("  [STILL PRESENT]  ClickOnce campaign token dirs in: $coPath")
+            $clickOnceClean = $false
+            $Issues++
+            $VerifyResults.Add("  [STILL PRESENT]  ClickOnce campaign token dirs in: $coPath")
             Write-Log "  [!] STILL PRESENT: ClickOnce campaign dirs in $coPath" "Red"
         }
     }
 }
-if ($script:clickOnceClean) {
-    $script:VerifyResults.Add("  [CLEAR]          ClickOnce cache (no campaign tokens found)")
+if ($clickOnceClean) {
+    $VerifyResults.Add("  [CLEAR]          ClickOnce cache (no campaign tokens found)")
     Write-Log "  [OK] Cleared: ClickOnce cache" "Green"
 }
 
@@ -607,10 +541,10 @@ if ($script:clickOnceClean) {
 # Verification is based on Step 7 outcome, not a re-query.
 if ($ps4104Hits.Count -gt 0) {
     # Step 7 found and cleared entries -- mark as clean based on successful wevtutil cl
-    $script:VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (documented and log cleared in Step 7)")
+    $VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (documented and log cleared in Step 7)")
     Write-Log "  [OK] Cleared: PowerShell 4104 campaign entries (Step 7 documented and cleared $($ps4104Hits.Count) entries)" "Green"
 } else {
-    $script:VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (none present)")
+    $VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (none present)")
     Write-Log "  [OK] Cleared: PowerShell 4104 campaign entries (none found)" "Green"
 }
 
@@ -623,17 +557,14 @@ Write-Log ("=" * 70) "DarkCyan"
 Write-Log "  REMEDIATION COMPLETE" "Cyan"
 Write-Log ("=" * 70) "DarkCyan"
 Write-Log ""
-# Snapshot the count and coerce defensively so this block can never
-# produce "STATUS :  item(s) could not be removed." (blank number).
-$issueCount = [int]($script:Issues)
-if ($issueCount -le 0) {
+if ($Issues -eq 0) {
     Write-Log "  STATUS : All verified indicators removed successfully." "Green"
     Write-Log "  *** REBOOT THIS MACHINE NOW ***" "Yellow"
     Write-Log ""
     Write-Log "  After rebooting, run system_check.ps1 to confirm clean." "White"
     Write-Log "  Then change ALL passwords used on this machine." "White"
 } else {
-    Write-Log "  STATUS : $issueCount item(s) could not be removed." "Red"
+    Write-Log "  STATUS : $Issues item(s) could not be removed." "Red"
     Write-Log "  Review output above. Reboot and re-run, or contact PNWC." "Yellow"
 }
 Write-Log ""
@@ -644,8 +575,8 @@ Write-Log ("=" * 70) "DarkCyan"
 # ════════════════════════════════════════════════════════════
 # SAVE REPORT FILE
 # ════════════════════════════════════════════════════════════
-$statusText = if ($issueCount -le 0) { "ALL DETECTED ITEMS REMOVED -- Reboot required to complete cleanup" }
-              else                   { "INCOMPLETE -- $issueCount item(s) could not be removed, see details below" }
+$statusText = if ($Issues -eq 0) { "ALL DETECTED ITEMS REMOVED -- Reboot required to complete cleanup" }
+              else               { "INCOMPLETE -- $Issues item(s) could not be removed, see details below" }
 
 $divider = "=" * 70
 
@@ -657,7 +588,7 @@ $divider
   Prepared by : Pacific Northwest Computers
   Phone       : 360-624-7379
   Email       : jon@pnwcomputers.com
-  Tool ver    : 2.4.0
+  Tool ver    : 2.2
 $divider
 
   ##############################################################
@@ -734,7 +665,7 @@ $divider
 POST-REMEDIATION VERIFICATION RESULTS
 $divider
 
-$($script:VerifyResults | Out-String)
+$($VerifyResults | Out-String)
 $divider
 REQUIRED NEXT STEPS
 $divider
@@ -773,6 +704,10 @@ $divider
     IP: 139.178.89.208
     IP: 139.178.89.96
     IP: 139.178.89.228
+    # instance-wrnmil (2023)
+    IP: 147.28.129.152
+    # instance-sis2tc rotation
+    IP: 147.75.50.76
     # SILENTCONNECT delivery infrastructure
     IP: 86.38.225.59
     # Dynamic DNS
@@ -782,6 +717,7 @@ $divider
     Domain: instance-zayrhg-relay.screenconnect.com
     Domain: instance-c7gab0-relay.screenconnect.com
     Domain: instance-xbirmk-relay.screenconnect.com
+    Domain: instance-wrnmil-relay.screenconnect.com
     Domain: bumptobabeco.top
     Domain: imansport.ir
     Domain: solpru.com
