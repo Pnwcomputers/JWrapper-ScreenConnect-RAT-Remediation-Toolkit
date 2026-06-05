@@ -60,14 +60,15 @@ Field data collected across 6+ confirmed victims in SW Washington / Portland met
 
 | Relay Instance | IPs Observed | Campaign Wave | Notes |
 | :--- | :--- | :--- | :--- |
-| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77` | April 2026 | Cross-victim confirmed — multiple victims 2 hrs apart |
+| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77`, `147.75.50.76` | 2025–2026 | Cross-victim confirmed — multiple victims 2 hrs apart; IP rotating |
 | `instance-fc5xev-relay.screenconnect.com` | `147.28.146.148` | 2024 | Earlier campaign wave |
 | `instance-zayrhg-relay.screenconnect.com` | `15.204.48.x`, `15.204.43.x`, `139.178.x.x` | 2023–2026 | Long-running — 14+ IP rotations over 3 years |
 | `instance-c7gab0-relay.screenconnect.com` | `147.75.70.x`, `15.204.43.236` | 2023–2025 | Secondary relay on same business network |
 | `instance-xbirmk-relay.screenconnect.com` | `139.178.89.x` | 2023–2024 | Earliest observed access, Jan 2023 |
+| `instance-wrnmil-relay.screenconnect.com` | `147.28.129.152` | 2023 | Fifth relay — concurrent with instance-zayrhg on same victim |
 | `gqpplgq2g.anondns.net` | Dynamic | March–April 2026 | Anonymous dynamic DNS — original documented case |
 
-> **Long-term persistence confirmed:** One business network shows continuous compromise across server and multiple workstations from January 2023 through May 2026 — over 3 years of undetected access. The same operator maintained three simultaneous relay connections, rotated IPs under stable relay hostnames, and periodically upgraded the payload version. Windows Defender was running throughout and detected nothing.
+> **Long-term persistence confirmed:** Multiple business networks show continuous compromise spanning years with zero antivirus detection. Three separate businesses confirmed affected in SW Washington / Portland metro area as of June 2026. The attacker maintained up to five simultaneous relay connections, rotated IPs under stable relay hostnames, periodically upgraded payload versions, and deployed VPN firewall rules (L2TP/PPTP/GRE) on victim workstations across multiple businesses — a consistent TTP indicating active lateral movement attempts.
 
 ---
 
@@ -182,8 +183,9 @@ Each report opens automatically in Notepad at completion and contains:
 91.215.85.219         (JWrapper C2 - redundant)
 147.45.218.13         (JWrapper C2 - redundant)
 
-# ScreenConnect C2 — Stage 1 relays (field-confirmed, April 2026 wave)
+# ScreenConnect C2 — instance-sis2tc relay (IP rotating)
 15.204.131.77         (instance-sis2tc -- April 2026, cross-victim confirmed)
+147.75.50.76          (instance-sis2tc -- Feb 2025, IP rotation)
 147.28.146.148        (instance-fc5xev -- 2024 campaign wave)
 
 # ScreenConnect C2 — instance-zayrhg relay (2023–2026, rotating IPs)
@@ -208,6 +210,9 @@ Each report opens automatically in Notepad at completion and contains:
 139.178.89.96         (instance-xbirmk -- Oct 2023)
 139.178.89.228        (instance-xbirmk -- Sep 2024)
 
+# ScreenConnect C2 — instance-wrnmil relay (2023)
+147.28.129.152        (instance-wrnmil -- Mar-Oct 2023)
+
 # SILENTCONNECT delivery infrastructure (Elastic Security Labs + OTX corroborated)
 86.38.225.59          (bumptobabeco.top -- Lithuania, AS398465 rackdog llc)
 
@@ -218,6 +223,7 @@ instance-fc5xev-relay.screenconnect.com
 instance-zayrhg-relay.screenconnect.com
 instance-c7gab0-relay.screenconnect.com
 instance-xbirmk-relay.screenconnect.com
+instance-wrnmil-relay.screenconnect.com
 
 # Known SILENTCONNECT campaign domains (Elastic Security Labs, March 2026)
 bumptobabeco[.]top
