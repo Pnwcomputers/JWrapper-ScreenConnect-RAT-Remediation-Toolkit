@@ -1,9 +1,9 @@
 # Medusa IAB Variant (JWrapper/ScreenConnect) — IOC Data Sheet
 ## *(SILENTCONNECT Campaign Family)*
 
-This is a field-sourced document of known Indicators of Compromise (IOCs) associated with the dual-channel JWrapper/SimpleHelp and weaponized ScreenConnect intrusion chain, frequently utilized by Initial Access Brokers (IABs) linked to Medusa Ransomware. All entries are confirmed from real incident response and forensic analysis of live infections across multiple victims in SW Washington and the Portland, OR metro area, March 31 – May 2026.
+This is a field-sourced document of known Indicators of Compromise (IOCs) associated with the dual-channel JWrapper/SimpleHelp and weaponized ScreenConnect intrusion chain, frequently utilized by Initial Access Brokers (IABs) linked to Medusa Ransomware. All entries are confirmed from real incident response and forensic analysis of live infections across multiple victims in SW Washington and the Portland, OR metro area, March 31 – June 2026.
 
-> **Campaign status:** ACTIVE as of May 2026. Multiple confirmed victims sharing identical C2 infrastructure. Designated **SILENTCONNECT** by Elastic Security Labs (March 19, 2026).
+> **Campaign status:** ACTIVE as of June 2026. Multiple confirmed victims sharing identical C2 infrastructure. Designated **SILENTCONNECT** by Elastic Security Labs (March 19, 2026).
 
 *Contributions: Submit a pull request or open an issue to add new IOCs observed in the wild.*
 
@@ -69,7 +69,7 @@ This is a field-sourced document of known Indicators of Compromise (IOCs) associ
 
 ### Malware Installation Directories
 
-```
+```text
 C:\ProgramData\JWrapper-Remote Access\                          (entire tree)
 C:\ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\
 C:\ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\SimpleGatewayService\
@@ -79,7 +79,7 @@ C:\Windows\SystemTemp\ScreenConnect\25.2.4.9229\
 %TEMP%\ScreenConnect\
 C:\Windows\Temp\ScreenConnect\
 C:\Windows\Temp\FileR.txt                                       (VBScript variant C# staging file)
-C:\Temp\ScreenConnect.ClientSetup.msi                          (VBScript variant MSI staging path)
+C:\Temp\ScreenConnect.ClientSetup.msi                           (VBScript variant MSI staging path)
 C:\Program Files\ScreenConnect Client*\
 C:\Program Files (x86)\ScreenConnect Client*\
 %LOCALAPPDATA%\Apps\2.0\                                        (ClickOnce cache — ScreenConnect client install)
@@ -88,7 +88,7 @@ C:\Program Files (x86)\ScreenConnect Client*\
 
 ### Notable Individual Files
 
-```
+```text
 C:\ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\serviceconfig.xml
 C:\ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\alertsdb
 C:\ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\verified
@@ -106,7 +106,7 @@ C:\Windows\SystemTemp\ScreenConnect\25.2.4.9229\ScreenConnect.WindowsAuthenticat
 
 ### Attacker Toolbox Execution Paths (Secondary Payloads)
 
-```
+```text
 C:\ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\working\toolbox-*\
 C:\ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\working\toolbox-7486505558619514016\remove20msp20rmm*.ps1
 ```
@@ -115,7 +115,7 @@ These paths are used by the attacker to stage and execute additional PowerShell 
 
 ### Developer Build Paths (Embedded in Binaries — Threat Actor OPSEC Artifacts)
 
-```
+```text
 C:\Users\jmorgan\Source\cwcontrol\Custom\DotNetRunner\Release\DotNetRunner.pdb
 C:\Compile\screenconnect\Product\WindowsAuthenticationPackage\bin\Release\ScreenConnect.WindowsAuthenticationPackage.pdb
 C:\builds\cc\cwcontrol\Product\ClientService\obj\Release\ScreenConnect.ClientService.pdb
@@ -129,24 +129,41 @@ C:\builds\cc\cwcontrol\Product\WindowsClient\obj\Release\ScreenConnect.WindowsCl
 
 ## 🔑 Registry Keys
 
-### Persistence (CRITICAL)
+### Persistence & Diagnostic Tracing (v2.5.0 Additions)
 
-```
+```text
 HKLM\SYSTEM\CurrentControlSet\Control\SafeBoot\Network\Remote Access Service
 HKLM\SYSTEM\CurrentControlSet\Control\SafeBoot\Minimal\Remote Access Service
 ```
 > Ensures the RAT service starts even when the machine is booted into Safe Mode with Networking. This is the primary reason standard removal tools fail on this infection.
 
+```text
+HKLM\SOFTWARE\WOW6432Node\Microsoft\Tracing\ScreenConnect_RASAPI32
+HKLM\SOFTWARE\WOW6432Node\Microsoft\Tracing\ScreenConnect_RASMANCS
+```
+> Tracing components left behind in the registry following the execution of specialized remote access payloads.
+
+```text
+HKLM\SYSTEM\ControlSet001\Services\EventLog\Application\ScreenConnect*
+HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\ScreenConnect*
+```
+> Windows Application Event Log source persistence keys left registered to support the hijacked clients.
+
+```text
+HKU\<User_Hive>\SOFTWARE\Classes\Software\Microsoft\Windows\CurrentVersion\Deployment\SideBySide\2.0
+```
+> ClickOnce deployment registry structures containing fragments matching `ScreenConnect` or `scre..` subkeys where multi-version Windows Client packages are staged per-user profile.
+
 ### Service Registration
 
-```
+```text
 HKLM\SYSTEM\CurrentControlSet\Services\Remote Access Service
 HKLM\SYSTEM\CurrentControlSet\Services\ScreenConnect Client*
 ```
 
 ### Masquerading / Uninstall Hive
 
-```
+```text
 HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remote Access
 ```
 
@@ -244,9 +261,9 @@ AlwaysDeleteSessionOnExit = true    <!-- Session artifacts purged on disconnect 
 | `solpru[.]com` | domain | DocuSign phishing lure page — confirms e-signature social engineering theme |
 | `checkfirst[.]net` | domain | Phishing email sender domain (Elastic Security Labs) |
 | `checkfirst[.]net.au` | domain | Phishing sender domain — AU variant; lower confidence |
-| `http://imansport.ir/download_invitee.php` | URL | VBScript download endpoint |
-| `http://solpru.com/process/docusign.html` | URL | DocuSign impersonation lure page |
-| `https://bumptobabeco.top/Bin/ScreenConnect.ClientSetup.msi?e=Access&y=Guest` | URL | Direct ScreenConnect MSI delivery URL — first seen serving March 19, 2026 |
+| `[http://imansport.ir/download_invitee.php](http://imansport.ir/download_invitee.php)` | URL | VBScript download endpoint |
+| `[http://solpru.com/process/docusign.html](http://solpru.com/process/docusign.html)` | URL | DocuSign impersonation lure page |
+| `[https://bumptobabeco.top/Bin/ScreenConnect.ClientSetup.msi?e=Access&y=Guest](https://bumptobabeco.top/Bin/ScreenConnect.ClientSetup.msi?e=Access&y=Guest)` | URL | Direct ScreenConnect MSI delivery URL — first seen serving March 19, 2026 |
 | Cloudflare R2 (`r2.dev`) | hosting | VBScript payload hosting |
 | Google Drive | hosting | C# second-stage payload staging |
 
@@ -274,7 +291,7 @@ AlwaysDeleteSessionOnExit = true    <!-- Session artifacts purged on disconnect 
 
 ### Local IPC Port
 
-```
+```text
 41431   (TCP, localhost — used by StopSimpleGatewayService.exe to communicate with the running RAT service)
 ```
 
@@ -299,7 +316,7 @@ AlwaysDeleteSessionOnExit = true    <!-- Session artifacts purged on disconnect 
 
 ### Campaign Profile Names (decoded from hex in JWrapper logs)
 
-```
+```text
 Transport office101/103/AUTODETECT    (initial profile — observed March 30 – April 4)
 Star 2026/AUTODETECT                  (rotated profile — observed April 5 onward)
 ```
@@ -308,20 +325,20 @@ Star 2026/AUTODETECT                  (rotated profile — observed April 5 onwa
 
 ### Application Profile IDs
 
-```
+```text
 30994437457905930274238194135013257   (initial profile)
 32662606070342690172655316692737204611 (post-rotation profile)
 ```
 
 ### RAT Session ID
 
-```
+```text
 SG_3243431771723114121
 ```
 
 ### C2 Registration Key (`reckey`) — Links All Three Relay Servers to Same Operator
 
-```
+```text
 9F6D305069D23FF1265FA557A597E0CF5EBAE0BEA0EE1BA49A0546E15B809263EB5C0C6AFF2D08B8C9208BDB03B2EDD0A58915D052F76CD9C6B399C414471997
 ```
 
@@ -336,13 +353,21 @@ SG_3243431771723114121
 | `25b0fbb6ef7eb094` | v17.x–v18.x | Early campaign payload — 2021–2024 |
 | `b15b0581876c57b7` | v15.x | Oldest observed payload — 2021–2022 |
 
-### Confirmed ScreenConnect Instance IDs
+### Confirmed ScreenConnect Session / Instance Identifiers (From Field Registry Data)
 
-| Instance ID | Relay | Notes |
+| Property Type | Value / Identifier | Target Field Details |
 | :--- | :--- | :--- |
-| `3d3b2f272279de02` | `instance-sis2tc` | Confirmed campaign — WindowsAuthenticationPackage.dll hash match |
-| `fd116df82d4badf8` | `instance-c7gab0` | Confirmed campaign — WindowsAuthenticationPackage.dll hash match |
-| `e79a68f16cd026b7` | Unknown | MANAGER machine dedicated instance |
+| Session GUID | `e1547f6c-d35e-4a9b-af35-7c714f3fd2e1` | Associated with `instance-fc5xev-relay.screenconnect.com` |
+| Session GUID | `74c55011-6e7f-4f54-9f66-397773d3e59d` | Associated with `instance-sis2tc-relay.screenconnect.com` |
+| Instance ID | `3d3b2f272279de02` | Confirmed campaign — WindowsAuthenticationPackage.dll hash match |
+| Instance ID | `fd116df82d4badf8` | Confirmed campaign — WindowsAuthenticationPackage.dll hash match |
+| Instance ID | `e79a68f16cd026b7` | Unknown — MANAGER machine dedicated instance |
+
+### Observed Client Engine Versions in SideBySide Executions
+* `22.4.7.8154`
+* `23.9.10.8817`
+* `24.4.5.9139`
+* `26.1.24.9579`
 
 ### Additional Field-Verified SHA-256 Hashes (3d3b2f27 build)
 
@@ -359,7 +384,7 @@ SG_3243431771723114121
 
 ### JWrapper Package Versions
 
-```
+```text
 JWrapper core:          00118607049
 Remote Access bundle:   00118607124  (SimpleHelp v5.5.14)
 Windows JRE:            00118596800  (JRE 21.0.8)
@@ -369,7 +394,7 @@ ScreenConnect version:  25.4.25.9314 (newer variant -- MSI recovered from field,
 
 ### Package Hash Sentinel Files (zero-byte, named by SHA-256)
 
-```
+```text
 ba136626de3df076f7210ffde178060755007ae8c2a82e3392424f4b015fd80e3b02797753769c143cc2a46e59d9a5ce8139208405443a433522b48d959bf6e2
 c0ff50beeefa3822b38afe48b5296a8e15d92096b16583a06ece69027f9455482ef6b1d473f0f7f272593222dfc85dc64a5fe9419ec0756401d10b58bb7a5989
 e616c631f41874299b8c8306861e080be6528df51d27b72b4329257020491c123b49b93ff6fa2ff7d73dd2c4c023662f9248ee74ce19232ade2e2a377611fe95
@@ -391,17 +416,26 @@ The following processes were confirmed running simultaneously on infected machin
 | `ScreenConnect.ClientService.exe` | Stage 1 RAT service |
 | `ScreenConnect.WindowsClient.exe` | Stage 1 client |
 
-### False Positive Clarification
+### False Positive Clarification (Whitelisted & Co-occurring Software Logged)
 
-The following processes were observed on infected machines but are **legitimate software** used by the affected clients — their presence alone is NOT an indicator of compromise:
+The following processes were observed on infected machines but represent **legitimate software applications** used by affected clients. Their presence alone is NOT an indicator of compromise and has been explicitly whitelisted in toolkit filters to avoid system disruption:
 
-| Process | Legitimate Use |
-| :--- | :--- |
-| `TeamViewer_Service.exe` | TeamViewer — legitimate remote support tool used by these clients |
-| `ZohoURSService.exe` | Zoho Assist — legitimate RMM used by these clients |
-| `MBAMService.exe` | Malwarebytes Anti-Malware — present and running but did not detect this infection |
-| `QBW.EXE` + QB services | QuickBooks — present on business victim machines |
-| `OUTLOOK.EXE` | Microsoft Outlook — present on business victim machines |
+| Process / Domain | Target Classification | Legitimate Environmental Use |
+| :--- | :--- | :--- |
+| `furnwiz.screenconnect.com` | Legitimate Whitelisted Domain | Client Line-of-Business ScreenConnect connection endpoint |
+| `furniturewizard.screenconnect.com` | Legitimate Whitelisted Domain | Client Line-of-Business ScreenConnect connection endpoint |
+| `Wizard_15_Full_Install.exe` | Legitimate File | "Furniture Wizard" main system installation package |
+| `Wiz10_16.15-2016-12-13.exe` | Legitimate File | "Furniture Wizard" line software deployment container |
+| `WizardSuppInstall.exe` | Legitimate File | "Furniture Wizard" auxiliary support framework tool |
+| `StartAccess5_2016.exe` | Legitimate File | Local client database environment launcher script |
+| `QBFC12_0Installer.exe` | Legitimate File | QuickBooks Foundation Class interface software |
+| `QBW.EXE` + QB services | Legitimate Business Software | QuickBooks Accounting Suite desktop application database instance |
+| `OUTLOOK.EXE` | Legitimate Business Software | Microsoft Outlook email communication client |
+| `LMIIgnition.exe` / `LogMeInToolkit.exe` | Legitimate Remote Access | LogMeIn client engine components used for environmental management |
+| `g2ax_user_high_customer.exe` | Legitimate Remote Access | GoToAssist customer support software infrastructure endpoint |
+| `TeamViewer_Service.exe` | Legitimate Remote Access | TeamViewer remote desktop support service engine |
+| `ZohoURSService.exe` | Legitimate Remote Access | Zoho Assist operational remote support engine |
+| `MBAMService.exe` / `mbam.exe` | Legitimate Security Software | Malwarebytes endpoint defense platform agent components |
 
 > **Critical note for business victims running QuickBooks and Outlook:** These applications were confirmed present and running during the dwell window on at least one infected business machine. Treat all credentials, financial data, and email history as compromised regardless of whether financial fraud has been discovered yet.
 
@@ -418,7 +452,7 @@ The following processes were observed on infected machines but are **legitimate 
 | Execution | T1059.005 | VBScript — SILENTCONNECT VBScript loader variant |
 | Execution | T1218.007 | System Binary Proxy Execution: Msiexec — `msiexec.exe /i ScreenConnect.ClientSetup.msi` |
 | Persistence | T1543.003 | Create/Modify System Process: Windows Service |
-| Persistence | T1547 | Boot/Logon Autostart — SafeBoot registry key |
+| Persistence | T1547 | Boot/Logon Autostart — SafeBoot registry key and SideBySide/ClickOnce application caching keys |
 | Privilege Escalation | T1548.002 | Bypass UAC — DigiCert-signed NSIS installer (blue UAC prompt); VBScript variant uses CMSTPLUA COM interface |
 | Defense Evasion | T1036.005 | Masquerading — `.scr` extension, fake e-signature filename |
 | Defense Evasion | T1553.002 | Code Signing — valid DigiCert Authenticode certificate on dropper |
@@ -535,7 +569,7 @@ rule Windows_Trojan_SilentConnect_cdc03e84 {
 | `adc1cf894cd35a7d7176ac5dab005bea55516bc9998d0c96223b6c0004723c37` | `fa251523d7da027f49aad93d6049d40e` | `f4f9cfda5bea62a13734c844609d6a8112b6c886` |
 
 Additional SHA1 from OTX pulse 69bd45 (SILENTCONNECT loader variant):
-```
+```text
 1b576ebba5b7bbd023eea1b15dac1ed3fb76a211
 ```
 
@@ -559,5 +593,9 @@ This IOC set is published and cross-referenced on AlienVault OTX. Related pulses
 
 *All IOCs verified from live field incident data unless otherwise noted.*
 *Pacific Northwest Computers — jon@pnwcomputers.com | 360-624-7379*
-*Last updated: May 2026*
+*Last updated: June 2026*
 *Contributions welcome — see CONTRIBUTE.md*
+
+```
+
+```
