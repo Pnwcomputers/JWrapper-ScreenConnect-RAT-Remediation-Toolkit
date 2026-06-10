@@ -15,7 +15,7 @@
 
 .NOTES
     Author  : Pacific Northwest Computers
-    Contact : jon@pnwcomputers.com | 360-624-7379
+    Contact : support@pnwcomputers.com |  
     Version : 2.5.1
     Updated : June 2026 -- added server-nix163ee578 relay sinkholing, 
               SideBySide user hive cleaning, Tracing registry key scrubbing.
@@ -67,7 +67,7 @@ function Remove-LockedPath {
 Clear-Host
 Write-Log ("=" * 70) "DarkCyan"
 Write-Log "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " "Cyan"
-Write-Log "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " "Gray"
+Write-Log "   Pacific Northwest Computers  |  support@pnwcomputers.com        " "Gray"
 Write-Log "   v2.5.1 -- SILENTCONNECT / Medusa IAB variant                " "DarkGray"
 Write-Log ("=" * 70) "DarkCyan"
 Write-Log ""
@@ -638,17 +638,17 @@ $divider
   JWrapper / ScreenConnect Campaign (SILENTCONNECT / Medusa IAB Variant)
 $divider
   Prepared by : Pacific Northwest Computers
-  Phone       : 360-624-7379
-  Email       : jon@pnwcomputers.com
+  Phone       :  
+  Email       : support@pnwcomputers.com
   Tool ver    : 2.5.1
 $divider
 
   ##############################################################
   ##                                                          ##
-  ##   PLEASE EMAIL THIS REPORT TO: jon@pnwcomputers.com     ##
+  ##   PLEASE EMAIL THIS REPORT TO: support@pnwcomputers.com     ##
   ##                                                          ##
   ##   Copy the entire contents of this file and email to:   ##
-  ##     jon@pnwcomputers.com                                 ##
+  ##     support@pnwcomputers.com                                 ##
   ##                                                          ##
   ##   Suggested subject line:                                ##
   ##     Remediation Report - $env:COMPUTERNAME                ##
@@ -780,8 +780,8 @@ CONTACT PNWC FOR ASSISTANCE
 $divider
   Pacific Northwest Computers
   Jon Pienkowski -- CompTIA A+ Certified
-  Phone : 360-624-7379
-  Email : jon@pnwcomputers.com
+  Phone :  
+  Email : support@pnwcomputers.com
 
 $divider
 FULL REMEDIATION ACTION LOG
@@ -791,7 +791,7 @@ $($ActionLog | Out-String)
 
 $divider
   ##############################################################
-  ##   PLEASE EMAIL THIS REPORT TO: jon@pnwcomputers.com     ##
+  ##   PLEASE EMAIL THIS REPORT TO: support@pnwcomputers.com     ##
   ##   Subject: Remediation Report - $env:COMPUTERNAME        ##
   ##############################################################
 $divider
@@ -805,7 +805,7 @@ try {
     Write-Host ""
     Write-Host "  File  : $ReportFile" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "  *** PLEASE EMAIL THIS FILE TO jon@pnwcomputers.com ***" -ForegroundColor Yellow
+    Write-Host "  *** PLEASE EMAIL THIS FILE TO support@pnwcomputers.com ***" -ForegroundColor Yellow
     Write-Host "  Subject: Remediation Report - $env:COMPUTERNAME" -ForegroundColor Yellow
     Write-Host ("=" * 70) -ForegroundColor Green
     Write-Host ""
