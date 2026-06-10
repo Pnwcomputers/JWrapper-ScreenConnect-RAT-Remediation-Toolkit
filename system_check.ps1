@@ -517,6 +517,32 @@ foreach ($acPath in $appConfigPaths) {
     }
 }
 
+# Specific Furniture Wizard ScreenConnect instances
+$suspectDomains = @("furnwiz.screenconnect.com", "furniturewizard.screenconnect.com", "instance-fc5xev", "instance-sis2tc")
+Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match "ScreenConnect" } | ForEach-Object {
+    $cmd = $_.CommandLine
+    foreach ($domain in $suspectDomains) {
+        if ($cmd -match $domain) {
+            $hit = $true
+            Write-Hit -Label "Active Furniture Wizard ScreenConnect Process" `
+                      -Detail "PID: $($_.ProcessId)  |  Command Line contains: $domain" -Sev "CRITICAL"
+        }
+    }
+}
+
+# ScreenConnect Tracing Registry Keys
+$TraceKeys = @(
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Tracing\ScreenConnect_RASAPI32",
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Tracing\ScreenConnect_RASMANCS"
+)
+foreach ($tk in $TraceKeys) {
+    if (Test-Path $tk) {
+        $hit = $true
+        Write-Hit -Label "ScreenConnect Tracing Registry Key Found" `
+                  -Detail "Path: $tk  |  Indicates execution of ScreenConnect components" -Sev "HIGH"
+    }
+}
+
 if (-not $hit) { Write-Clean "No ScreenConnect artifacts found" }
 
 
