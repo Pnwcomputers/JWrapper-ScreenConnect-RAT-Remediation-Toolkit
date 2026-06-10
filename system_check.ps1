@@ -15,10 +15,9 @@
 .NOTES
     Author  : Pacific Northwest Computers
     Contact : jon@pnwcomputers.com | 360-624-7379
-    Version : 2.2
-    Updated : May 2026 -- added cross-victim C2 IPs, ClickOnce cache
-              detection, VBScript delivery artifacts, app.config/user.config
-              C2 confirmation, MMSOFT Pulseway staging dir, new process aliases
+    Version : 2.5.1
+    Updated : June 2026 -- added server-nix163ee578 relay, memory command-line 
+              detection, Tracing registry keys, removed false positives.
 #>
 
 #Requires -RunAsAdministrator
@@ -68,7 +67,7 @@ Write-Log ("=" * 70) "DarkCyan"
 Write-Log "   PNWC Detection Checker - JWrapper / ScreenConnect Campaign  " "Cyan"
 Write-Log "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " "Gray"
 Write-Log "   READ-ONLY -- This script makes NO changes to the system     " "Green"
-Write-Log "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " "DarkGray"
+Write-Log "   v2.5.1 -- SILENTCONNECT / Medusa IAB variant                " "DarkGray"
 Write-Log ("=" * 70) "DarkCyan"
 Write-Log ""
 Write-Log "  Scan started : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" "Gray"
@@ -104,6 +103,7 @@ foreach ($p in $BadProcs.Keys) {
                   -Detail "$($BadProcs[$p])  |  PID(s): $(($r.Id -join ', '))" -Sev "CRITICAL"
     }
 }
+
 # JWrapper java instances (path-filtered to avoid false positives on legitimate Java)
 Get-Process -Name "java" -ErrorAction SilentlyContinue |
     Where-Object { $_.Path -like "*JWrapper*" } | ForEach-Object {
@@ -111,6 +111,20 @@ Get-Process -Name "java" -ErrorAction SilentlyContinue |
         Write-Hit -Label "JWrapper Java Process Running" `
                   -Detail "java.exe  PID: $($_.Id)  Path: $($_.Path)" -Sev "CRITICAL"
     }
+
+# Specific malicious ScreenConnect relay instances in command line
+$suspectDomains = @("instance-fc5xev", "instance-sis2tc", "server-nix163ee578")
+Get-WmiObject Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match "ScreenConnect" } | ForEach-Object {
+    $cmd = $_.CommandLine
+    foreach ($domain in $suspectDomains) {
+        if ($cmd -match $domain) {
+            $hit = $true
+            Write-Hit -Label "Active Malicious ScreenConnect Process" `
+                      -Detail "PID: $($_.ProcessId)  |  Command Line contains: $domain" -Sev "CRITICAL"
+        }
+    }
+}
+
 if (-not $hit) { Write-Clean "No malicious processes found in memory" }
 
 
@@ -189,20 +203,20 @@ if (-not $hit) { Write-Clean "No malicious registry keys, Run entries, or schedu
 Write-Section "4. FILE SYSTEM ARTIFACTS"
 $hit = $false
 $FilePaths = @{
-    "$env:ProgramData\JWrapper-Remote Access"                                                                      = "JWrapper RAT installation directory"
-    "C:\Windows\SystemTemp\ScreenConnect"                                                                           = "ScreenConnect staging directory"
-    "$env:TEMP\ScreenConnect"                                                                                       = "ScreenConnect temp artifacts"
-    "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\serviceconfig.xml"                                 = "Live C2 configuration file"
-    "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\alertsdb"                                          = "Encrypted C2 session database"
-    "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\verified"                                          = "C2 connectivity confirmation file"
+    "$env:ProgramData\JWrapper-Remote Access"                                                              = "JWrapper RAT installation directory"
+    "C:\Windows\SystemTemp\ScreenConnect"                                                                  = "ScreenConnect staging directory"
+    "$env:TEMP\ScreenConnect"                                                                              = "ScreenConnect temp artifacts"
+    "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\serviceconfig.xml"                         = "Live C2 configuration file"
+    "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\alertsdb"                                  = "Encrypted C2 session database"
+    "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\verified"                                  = "C2 connectivity confirmation file"
     "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\SimpleGatewayService\Remote_Access_Service.exe"    = "RAT main service executable"
     "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\SimpleGatewayService\SimpleService.exe"            = "SafeBoot persistence binary"
     "$env:ProgramData\JWrapper-Remote Access\JWAppsSharedConfig\SimpleGatewayService\StopSimpleGatewayService.exe" = "RAT management utility"
     # VBScript / SILENTCONNECT variant staging files
-    "C:\Windows\Temp\FileR.txt"                                                                                     = "SILENTCONNECT C# payload staging file (VBScript variant)"
-    "C:\Temp\ScreenConnect.ClientSetup.msi"                                                                         = "SILENTCONNECT ScreenConnect installer (VBScript variant staging path)"
+    "C:\Windows\Temp\FileR.txt"                                                                            = "SILENTCONNECT C# payload staging file (VBScript variant)"
+    "C:\Temp\ScreenConnect.ClientSetup.msi"                                                                = "SILENTCONNECT ScreenConnect installer (VBScript variant staging path)"
     # Pulseway pre-staging artifact
-    "$env:APPDATA\MMSOFT Design\Pulseway\working"                                                                   = "Pulseway RMM staging directory -- may indicate prior-stage access"
+    "$env:APPDATA\MMSOFT Design\Pulseway\working"                                                          = "Pulseway RMM staging directory -- may indicate prior-stage access"
 }
 foreach ($p in $FilePaths.Keys) {
     if (Test-Path $p) {
@@ -367,7 +381,7 @@ $NetConns | Where-Object { $_.RemotePort -eq 8041 } | ForEach-Object {
     $hit = $true
     $own = (Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).Name
     Write-Hit -Label "LIVE SCREENCONNECT C2 BEACON (port 8041)" `
-              -Detail "Remote: $($_.RemoteAddress):8041  |  PID: $($_.OwningProcess) ($own)  |  ScreenConnect C2 relay port" -Sev "CRITICAL"
+                  -Detail "Remote: $($_.RemoteAddress):8041  |  PID: $($_.OwningProcess) ($own)  |  ScreenConnect C2 relay port" -Sev "CRITICAL"
 }
 
 # DNS cache -- all known C2 domains and relay hostnames
@@ -383,6 +397,7 @@ $C2Domains = @(
     "*bumptobabeco*",
     "*imansport*",
     "*solpru*",
+    "*server-nix163ee578*",
     "*checkfirst.net*"
 )
 foreach ($pattern in $C2Domains) {
@@ -465,7 +480,7 @@ foreach ($p in $SCFiles.Keys) {
 $sysConfigPath = "C:\Windows\SystemTemp\ScreenConnect\25.2.4.9229\system.config"
 if (Test-Path $sysConfigPath) {
     $sysContent = Get-Content $sysConfigPath -ErrorAction SilentlyContinue | Out-String
-    foreach ($indicator in @("anondns.net","gqpplgq2g","instance-sis2tc","instance-fc5xev","15.204.131.77","147.28.146.148")) {
+    foreach ($indicator in @("anondns.net","gqpplgq2g","instance-sis2tc","instance-fc5xev","server-nix163ee578","15.204.131.77","147.28.146.148")) {
         if ($sysContent -match [regex]::Escape($indicator)) {
             $hit = $true
             Write-Hit -Label "Known C2 Indicator in system.config: $indicator" `
@@ -485,6 +500,7 @@ foreach ($ucPath in $userConfigPaths) {
     foreach ($indicator in @(
         "instance-sis2tc","instance-fc5xev","instance-zayrhg",
         "instance-c7gab0","instance-xbirmk","instance-wrnmil",
+        "server-nix163ee578",
         "15.204.131.77","147.28.146.148",
         "15.204.48.24","15.204.48.31","15.204.48.34","15.204.43.162","15.204.43.236",
         "139.178.68.80","139.178.89.196","139.178.91.96","147.75.70.32",
@@ -514,19 +530,6 @@ foreach ($acPath in $appConfigPaths) {
         $hit = $true
         Write-Hit -Label "Campaign Stealth Flag in ScreenConnect app.config" `
                   -Detail "File: $acPath  |  AutoConsentToBackstage=true -- attacker receives shell without any user prompt" -Sev "CRITICAL"
-    }
-}
-
-# Specific Furniture Wizard ScreenConnect instances
-$suspectDomains = @("furnwiz.screenconnect.com", "furniturewizard.screenconnect.com", "instance-fc5xev", "instance-sis2tc")
-Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match "ScreenConnect" } | ForEach-Object {
-    $cmd = $_.CommandLine
-    foreach ($domain in $suspectDomains) {
-        if ($cmd -match $domain) {
-            $hit = $true
-            Write-Hit -Label "Active Furniture Wizard ScreenConnect Process" `
-                      -Detail "PID: $($_.ProcessId)  |  Command Line contains: $domain" -Sev "CRITICAL"
-        }
     }
 }
 
@@ -685,7 +688,7 @@ foreach ($sessionFile in @(
         $hit = $true
         $item = Get-Item $sessionFile
         Write-Hit -Label "JWrapper Session File: $(Split-Path $sessionFile -Leaf)" `
-                  -Detail "Path: $sessionFile  |  Modified: $($item.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))  |  Confirms active/recent C2 session" -Sev "HIGH"
+                  -Detail "Path: $sessionFile  |  Modified: $($item.LastWriteTime.ToString('yyyy-MM-dd HH:mmss'))  |  Confirms active/recent C2 session" -Sev "HIGH"
     }
 }
 
@@ -764,7 +767,7 @@ $divider
   Prepared by : Pacific Northwest Computers
   Phone       : 360-624-7379
   Email       : jon@pnwcomputers.com
-  Tool ver    : 2.2
+  Tool ver    : 2.5.1
 $divider
 
   ##############################################################
@@ -827,7 +830,7 @@ $divider
 
   REGARDLESS OF SCAN RESULT:
   1. Change ALL passwords used on this computer since March 30, 2026
-       Priority: email, banking, QuickBooks, business portals, cloud services
+        Priority: email, banking, QuickBooks, business portals, cloud services
   2. Enable Multi-Factor Authentication (MFA/2FA) on every account
   3. Review bank/financial accounts for unauthorized transactions
 
@@ -843,6 +846,7 @@ $divider
     IP:     147.45.218.13
     # ScreenConnect campaign relays (field-confirmed)
     IP:     15.204.131.77      (instance-sis2tc -- April 2026)
+    IP:     147.75.50.76       (instance-sis2tc -- Feb 2025 IP rotation)
     IP:     147.28.146.148     (instance-fc5xev -- 2024)
     # instance-zayrhg (2023-2026)
     IP:     15.204.48.24
@@ -873,6 +877,7 @@ $divider
     Domain: instance-c7gab0-relay.screenconnect.com
     Domain: instance-xbirmk-relay.screenconnect.com
     Domain: instance-wrnmil-relay.screenconnect.com
+    Domain: server-nix163ee578-relay.screenconnect.com
     Domain: bumptobabeco.top
     Domain: imansport.ir
     Domain: solpru.com
@@ -891,10 +896,9 @@ $divider
 
 $($ScreenLog | Out-String)
 
-$divider
   ##############################################################
   ##   PLEASE EMAIL THIS REPORT TO: jon@pnwcomputers.com     ##
-  ##   Subject: Malware Scan Report - $env:COMPUTERNAME       ##
+  ##   Subject: Malware Scan Report - $env:COMPUTERNAME        ##
   ##############################################################
 $divider
 "@
