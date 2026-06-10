@@ -28,9 +28,9 @@ This toolkit targets an infection chain that weaponizes **legitimate, digitally 
 The attack follows this progression:
 
 1. **Initial Access — Phishing Lure:** User receives a phishing email and is directed to a Cloudflare Turnstile CAPTCHA page. After passing the CAPTCHA, a malicious file is downloaded. Observed lure types include:
-   - NSIS installer: `e-Signature-Key_Access_ID-[ID].exe` — bearing a valid DigiCert Authenticode certificate, producing a trusted (blue) UAC prompt
-   - VBScript files: `E-INVITE.vbs`, `Proposal-03-2026.vbs`, and similar names
-   - Both variants ultimately deliver the same ScreenConnect payload via PowerShell or direct execution
+   * NSIS installer: `e-Signature-Key_Access_ID-[ID].exe` — bearing a valid DigiCert Authenticode certificate, producing a trusted (blue) UAC prompt
+   * VBScript files: `E-INVITE.vbs`, `Proposal-03-2026.vbs`, and similar names
+   * Both variants ultimately deliver the same ScreenConnect payload via PowerShell or direct execution
 
 2. **Stage 1 — ScreenConnect (Immediate Silent Access):** The installer silently drops and installs a weaponized ConnectWise ScreenConnect client (`rq.msi` + `rqe.exe`). All 13 user-facing notification settings are explicitly pre-disabled — no tray icon, no connection banner, no user alert of any kind. The client beacons to the attacker's relay.
 
@@ -46,7 +46,7 @@ The attack follows this progression:
 
 Most standard removal tools fail against this infection because the RAT registers itself in the Windows SafeBoot registry hive:
 
-```
+```text
 HKLM\SYSTEM\CurrentControlSet\Control\SafeBoot\Network\Remote Access Service
 ```
 
@@ -77,18 +77,19 @@ Field data collected across 6+ confirmed victims in SW Washington / Portland met
 ### `system_check.ps1` — Detection Scanner (Read-Only)
 Run this **before** any remediation. It makes zero changes to the system and produces a full timestamped detection report.
 
-Checks 11 categories:
-- Running malicious processes (including JWrapper java instances)
-- Malicious Windows services (exact names + wildcard + WMI binary path)
-- Registry persistence keys (SafeBoot, Services, Run keys, Scheduled Tasks)
-- File system artifacts (known paths, dropper files, `.scr` files)
-- Active network connections to known C2 IPs and port 8041
-- DNS cache for C2 domain resolution history
-- JWrapper log directory and active session evidence
-- ScreenConnect-specific artifacts including `system.config` and `app.config`
-- Windows Event Log indicators (Event IDs 7045, 4688, 4104)
-- Installed programs in Add/Remove Programs registry
-- SHA256 hash matching against all known campaign files
+Checks the following categories:
+* Running malicious processes (including JWrapper java instances and malicious ScreenConnect relay arguments)
+* Malicious Windows services (exact names + wildcard + WMI binary path)
+* Registry persistence keys (SafeBoot, Services, Run keys, Scheduled Tasks, ScreenConnect Tracing/EventLog artifacts)
+* File system artifacts (known paths, dropper files, `.scr` files)
+* Active network connections to known C2 IPs and port 8041
+* DNS cache for C2 domain resolution history
+* JWrapper log directory and active session evidence
+* ScreenConnect-specific artifacts including `system.config` and `app.config`
+* Windows Event Log indicators (Event IDs 7045, 4688, 4104)
+* Installed programs in Add/Remove Programs registry
+* SHA256 hash matching against all known campaign files
+* **Whitelisting:** Safely ignores legitimate Line-of-Business ScreenConnect instances to prevent false positives.
 
 At completion, the script saves a formatted report to the script directory and **auto-opens it in Notepad**, with clear instructions to email findings to the investigating technician.
 
@@ -97,13 +98,13 @@ At completion, the script saves a formatted report to the script directory and *
 ### `Fix.ps1` — Remediation Script
 Performs aggressive single-pass cleanup across 7 steps:
 
-1. **Terminate Processes** — Force-kills all malicious processes; targets JWrapper java instances by path
-2. **Remove Services** — Stops and deletes `Remote Access Service` and any `ScreenConnect Client*` services; captures `sc.exe` output for verification
-3. **Scrub Registry** — Removes SafeBoot key, service key, Uninstall hive entry, Run key entries, and any related Scheduled Tasks
-4. **Purge File System** — Uses `takeown` + `icacls` before deletion to defeat file permission locks; removes `JWrapper-Remote Access`, `ScreenConnect` staging directories, loose dropper files, and `.scr` files
-5. **Remove Firewall Rules** — Cleans any rules added by the RAT
-6. **Flush DNS Cache** — Removes cached resolution of C2 domains
-7. **Post-Remediation Verification** — Re-checks all key indicators and reports pass/fail per item
+1. **Terminate Processes:** Force-kills all malicious processes; targets JWrapper java instances by path.
+2. **Remove Services:** Stops and deletes `Remote Access Service` and any `ScreenConnect Client*` services; captures `sc.exe` output for verification.
+3. **Scrub Registry:** Removes SafeBoot key, service key, Uninstall hive entry, Run key entries, related Scheduled Tasks, and ScreenConnect Tracing/EventLog footprints.
+4. **Purge Caches & File System:** Clears SideBySide/ClickOnce deployment caches across all `HKEY_USERS` registry hives. Uses `takeown` + `icacls` to defeat file permission locks; removes `JWrapper-Remote Access`, `ScreenConnect` staging directories, loose `.vbs`/`.msi`/`.exe` dropper files, and `.scr` files.
+5. **Remove/Add Firewall & Network Rules:** Cleans any rules added by the RAT, and adds automated Windows Hosts file sinkholing and Outbound Windows Firewall rules for known malicious relays (`instance-fc5xev`, `instance-sis2tc`, etc.).
+6. **Flush DNS Cache:** Removes cached resolution of C2 domains.
+7. **Post-Remediation Verification:** Re-checks all key indicators and reports pass/fail per item, and removes Windows Defender exclusions added by the SILENTCONNECT payload.
 
 Saves a full timestamped remediation report (items removed, failed, not found, and verification results) and **auto-opens it in Notepad** with email instructions.
 
@@ -112,13 +113,24 @@ Saves a full timestamped remediation report (items removed, failed, not found, a
 ### `RUN_ME.bat` — Interactive Launcher
 Run this as Administrator. Presents a simple menu:
 
-```
+```text
 [1]  CHECK ONLY   Scan for indicators (no changes made)
 [2]  FIX / CLEAN  Remove all detected malware
 [3]  EXIT
 ```
 
 Option `[2]` requires typing `YES` to confirm before any destructive action runs.
+
+---
+
+## 📦 Changelog
+
+### v2.5.0
+* **Added:** Deep registry cleaning for SideBySide/ClickOnce deployment caches across all `HKEY_USERS` hives.
+* **Added:** Cleanup for ScreenConnect Tracing (`WOW6432Node\Microsoft\Tracing`) and EventLog registry keys.
+* **Added:** Automated Windows Hosts file sinkholing for known malicious relays (`instance-fc5xev`, `instance-sis2tc`).
+* **Updated:** Memory and process detection logic to actively hunt for specific malicious relay command-line arguments.
+* **Fixed:** Whitelisted valid local applications (e.g., Furniture Wizard) to prevent accidental disruption of legitimate business tools.
 
 ---
 
@@ -154,10 +166,10 @@ Both scripts generate timestamped `.txt` report files saved to the same folder a
 | `Fix.ps1` | `PNWC_Remediation_Report_YYYY-MM-DD_HH-mm-ss.txt` |
 
 Each report opens automatically in Notepad at completion and contains:
-- Full system and scan metadata
-- A consolidated **Malicious Findings** section listing only the threats detected
-- Recommended next steps
-- Contact information and instructions to email the report to the investigating technician
+* Full system and scan metadata
+* A consolidated **Malicious Findings** section listing only the threats detected
+* Recommended next steps
+* Contact information and instructions to email the report to the investigating technician
 
 ---
 
@@ -177,7 +189,7 @@ Each report opens automatically in Notepad at completion and contains:
 
 ## 🌐 Block These at Your Firewall / Router
 
-```
+```text
 # JWrapper C2 — Stage 2 RAT relays
 147.45.218.0          (JWrapper C2 - primary)
 91.215.85.219         (JWrapper C2 - redundant)
@@ -263,4 +275,4 @@ This toolkit is provided as-is under the MIT License, without warranty of any ki
 
 *Pacific Northwest Computers — Vancouver, WA*
 *jon@pnwcomputers.com | 360-624-7379*
-*Last updated: May 2026 — reflects multi-victim field data*
+*Last updated: June 2026 — reflects multi-victim field data and v2.5.1 enhancements*
