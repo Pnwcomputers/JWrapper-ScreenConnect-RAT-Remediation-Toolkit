@@ -16,10 +16,9 @@
 .NOTES
     Author  : Pacific Northwest Computers
     Contact : jon@pnwcomputers.com | 360-624-7379
-    Version : 2.2
-    Updated : May 2026 -- added ClickOnce cache purge, VBScript staging files,
-              SILENTCONNECT delivery artifacts, Defender exclusion removal,
-              new process aliases, updated firewall block list
+    Version : 2.5.1
+    Updated : June 2026 -- added server-nix163ee578 relay sinkholing, 
+              SideBySide user hive cleaning, Tracing registry key scrubbing.
 #>
 
 #Requires -RunAsAdministrator
@@ -66,17 +65,17 @@ function Remove-LockedPath {
 
 # ── Banner ────────────────────────────────────────────────────────────────────
 Clear-Host
-Write-Host ("=" * 70) -ForegroundColor DarkCyan
-Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
-Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
-Write-Host "   v2.2 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
-Write-Host ("=" * 70) -ForegroundColor DarkCyan
-Write-Host ""
-Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
-Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
-Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
-Write-Host ""
-$ActionLog.Add("PNWC Remediation Tool v2.2 -- JWrapper/ScreenConnect (SILENTCONNECT)")
+Write-Log ("=" * 70) "DarkCyan"
+Write-Log "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " "Cyan"
+Write-Log "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " "Gray"
+Write-Log "   v2.5.1 -- SILENTCONNECT / Medusa IAB variant                " "DarkGray"
+Write-Log ("=" * 70) "DarkCyan"
+Write-Log ""
+Write-Log "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" "Gray"
+Write-Log "  Computer : $env:COMPUTERNAME" "Gray"
+Write-Log "  Log file : $ReportFile" "Gray"
+Write-Log ""
+$ActionLog.Add("PNWC Remediation Tool v2.5.1 -- JWrapper/ScreenConnect (SILENTCONNECT)")
 $ActionLog.Add("Started : $(Get-Date)")
 $ActionLog.Add("Computer: $env:COMPUTERNAME")
 $ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
@@ -87,13 +86,13 @@ $ActionLog.Add(("=" * 70))
 # ════════════════════════════════════════════════════════════
 # STEP 1 — KILL PROCESSES
 # ════════════════════════════════════════════════════════════
-Write-Log "--- STEP 1: Terminating Malicious Processes ---" "Cyan"
+Write-Section "--- STEP 1: Terminating Malicious Processes ---"
 $BadProcs = @(
     "Remote_Access_Service",
     "Remote Access Service",        # space-variant alias (confirmed in ETL traces)
     "Remote_Access_Configure",
     "Remote_Access_Launcher",
-    "Remote_AccessWinLauncher",     # JWrapper Windows launcher component (v2.2 addition)
+    "Remote_AccessWinLauncher",     # JWrapper Windows launcher component
     "SimpleService",
     "StopSimpleGatewayService",
     "ScreenConnect.WindowsClient",
@@ -115,7 +114,7 @@ foreach ($proc in $BadProcs) {
             Log-Removed "Process: $proc"
         }
     } else {
-        Write-Log "  [--] Not running: $proc" "DarkGray"
+        Write-Log "   [--] Not running: $proc" "DarkGray"
         Log-NotFound "Process: $proc"
     }
 }
@@ -131,8 +130,7 @@ Get-Process -Name "java" -ErrorAction SilentlyContinue |
 # ════════════════════════════════════════════════════════════
 # STEP 2 — REMOVE SERVICES
 # ════════════════════════════════════════════════════════════
-Write-Log ""
-Write-Log "--- STEP 2: Removing Malicious Services ---" "Cyan"
+Write-Section "--- STEP 2: Removing Malicious Services ---"
 $SvcList = [System.Collections.Generic.List[string]]::new()
 $SvcList.Add("Remote Access Service")
 Get-Service -Name "ScreenConnect Client*" -ErrorAction SilentlyContinue |
@@ -154,7 +152,7 @@ foreach ($svc in $SvcList) {
             Log-Failed "Service: $svc  ($res)"
         }
     } else {
-        Write-Log "  [--] Service not found: $svc" "DarkGray"
+        Write-Log "   [--] Service not found: $svc" "DarkGray"
         Log-NotFound "Service: $svc"
     }
 }
@@ -163,8 +161,7 @@ foreach ($svc in $SvcList) {
 # ════════════════════════════════════════════════════════════
 # STEP 3 — REGISTRY PERSISTENCE
 # ════════════════════════════════════════════════════════════
-Write-Log ""
-Write-Log "--- STEP 3: Removing Registry Persistence ---" "Cyan"
+Write-Section "--- STEP 3: Removing Registry Persistence ---"
 $RegKeys = @(
     "HKLM:\SYSTEM\CurrentControlSet\Control\SafeBoot\Network\Remote Access Service",
     "HKLM:\SYSTEM\CurrentControlSet\Control\SafeBoot\Minimal\Remote Access Service",
@@ -184,7 +181,7 @@ foreach ($key in $RegKeys) {
             Log-Failed "Registry: $key"
         }
     } else {
-        Write-Log "  [--] Key not present: $key" "DarkGray"
+        Write-Log "   [--] Key not present: $key" "DarkGray"
         Log-NotFound "Registry: $key"
     }
 }
@@ -213,7 +210,7 @@ Get-ScheduledTask -ErrorAction SilentlyContinue |
         Unregister-ScheduledTask -TaskName $_.TaskName -Confirm:$false -ErrorAction SilentlyContinue
         Log-Removed "Scheduled Task: $($_.TaskName)"
     }
-# ScreenConnect Event Log and Tracing registry keys
+# ScreenConnect Event Log and Tracing registry keys Wipes
 Write-Log "  [*] Removing ScreenConnect Event Log and Tracing registry keys..." "Yellow"
 $TracingPaths = @(
     "HKLM:\SYSTEM\ControlSet001\Services\EventLog\Application\ScreenConnect*",
@@ -235,7 +232,7 @@ foreach ($path in $TracingPaths) {
             }
         }
 }
-# SideBySide/ClickOnce deployment cache in Registry
+# SideBySide/ClickOnce deployment cache in Registry Hive Sweeper
 Write-Log "  [*] Purging ScreenConnect from SideBySide registry cache..." "Yellow"
 $userHives = Get-ChildItem -Path "Registry::HKEY_USERS" -ErrorAction SilentlyContinue
 foreach ($userHive in $userHives) {
@@ -259,8 +256,7 @@ foreach ($userHive in $userHives) {
 # ════════════════════════════════════════════════════════════
 # STEP 4 — FILE SYSTEM
 # ════════════════════════════════════════════════════════════
-Write-Log ""
-Write-Log "--- STEP 4: Purging File System Artifacts ---" "Cyan"
+Write-Section "--- STEP 4: Purging File System Artifacts ---"
 
 # Primary installation directories
 $PrimaryPaths = [System.Collections.Generic.List[string]]::new()
@@ -281,7 +277,7 @@ foreach ($path in $PrimaryPaths) {
     }
 }
 
-# ClickOnce cache -- remove ScreenConnect entries per-user (v2.2 addition)
+# ClickOnce cache -- remove ScreenConnect entries per-user
 Write-Log "  [*] Scanning ClickOnce cache for ScreenConnect artifacts..." "Yellow"
 Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
     $coPath = Join-Path $_.FullName "AppData\Local\Apps\2.0"
@@ -311,7 +307,7 @@ Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Obje
     }
 }
 
-# SILENTCONNECT variant staging files (v2.2 addition)
+# SILENTCONNECT variant staging files
 $StagingFiles = @(
     "C:\Windows\Temp\FileR.txt",                          # C# payload staging file
     "C:\Temp\ScreenConnect.ClientSetup.msi",              # MSI staging path
@@ -335,7 +331,7 @@ foreach ($f in $StagingFiles) {
     }
 }
 
-# VBScript delivery files in common locations (v2.2 addition)
+# VBScript delivery files in common locations
 $VbsPatterns = @(
     "$env:USERPROFILE\Downloads\E-INVITE.vbs",
     "$env:USERPROFILE\Downloads\Proposal-*.vbs",
@@ -389,8 +385,7 @@ if ((Test-Path $pulsewayPath) -and (-not $pulsewayInstalled)) {
 # ════════════════════════════════════════════════════════════
 # STEP 5 — FIREWALL RULES
 # ════════════════════════════════════════════════════════════
-Write-Log ""
-Write-Log "--- STEP 5: Removing Malicious Firewall Rules & Adding C2 Blocks ---" "Cyan"
+Write-Section "--- STEP 5: Removing Malicious Firewall Rules & Adding C2 Blocks ---"
 
 # Remove any firewall rules created by the malware
 Get-NetFirewallRule -ErrorAction SilentlyContinue |
@@ -445,7 +440,7 @@ foreach ($ip in $C2BlockIPs.Keys) {
                 -RemoteAddress $ip `
                 -Protocol Any `
                 -Enabled True `
-                -Description "PNWC Remediation v2.2 -- Block $($C2BlockIPs[$ip])" `
+                -Description "PNWC Remediation v2.5.1 -- Block $($C2BlockIPs[$ip])" `
                 -ErrorAction Stop | Out-Null
             Write-Log "  [OK] Added outbound block rule for: $ip ($($C2BlockIPs[$ip]))" "Green"
             Log-Removed "Firewall block added for C2 IP: $ip"
@@ -460,10 +455,9 @@ foreach ($ip in $C2BlockIPs.Keys) {
 
 
 # ════════════════════════════════════════════════════════════
-# STEP 6 — DNS FLUSH
+# STEP 6 — DNS FLUSH & SINKHOLING
 # ════════════════════════════════════════════════════════════
-Write-Log ""
-Write-Log "--- STEP 6: Flushing DNS Cache ---" "Cyan"
+Write-Section "--- STEP 6: Flushing DNS Cache & Local Host Sinkholing ---"
 try {
     Clear-DnsClientCache -ErrorAction Stop
     Write-Log "  [OK] DNS cache flushed (removes cached resolution of C2 domains)" "Green"
@@ -472,6 +466,7 @@ try {
     Write-Log "  [!] DNS flush failed: $($_.Exception.Message)" "Red"
     Log-Failed "DNS Cache flush"
 }
+
 # Sinkhole known malicious ScreenConnect domains
 Write-Log "  [*] Blocking known malicious ScreenConnect domains in hosts file..." "Yellow"
 $hostsFile = "$env:windir\System32\drivers\etc\hosts"
@@ -500,8 +495,7 @@ foreach ($domain in $badDomains) {
 # ════════════════════════════════════════════════════════════
 # STEP 7 — POWERSHELL EVENT LOG CLEAR
 # ════════════════════════════════════════════════════════════
-Write-Log ""
-Write-Log "--- STEP 7: Clearing PowerShell Event Log ---" "Cyan"
+Write-Section "--- STEP 7: Clearing PowerShell Event Log ---"
 Write-Log "  [*] Clearing Microsoft-Windows-PowerShell/Operational log..." "Yellow"
 Write-Log "      (Removes any delivery-chain Script Block entries.)" "Gray"
 
@@ -529,8 +523,7 @@ try {
 # ════════════════════════════════════════════════════════════
 # STEP 8 — WINDOWS DEFENDER EXCLUSION REMOVAL
 # ════════════════════════════════════════════════════════════
-Write-Log ""
-Write-Log "--- STEP 8: Removing Windows Defender Exclusions Added by Malware ---" "Cyan"
+Write-Section "--- STEP 8: Removing Windows Defender Exclusions Added by Malware ---"
 # SILENTCONNECT adds an ExclusionExtension for .exe during delivery
 # to prevent Defender from scanning the ScreenConnect installer
 try {
@@ -552,8 +545,7 @@ try {
 # ════════════════════════════════════════════════════════════
 # STEP 9 — POST-REMEDIATION VERIFICATION
 # ════════════════════════════════════════════════════════════
-Write-Log ""
-Write-Log "--- STEP 9: Post-Remediation Verification ---" "Cyan"
+Write-Section "--- STEP 9: Post-Remediation Verification ---"
 $Issues = 0
 $VerifyResults = [System.Collections.Generic.List[string]]::new()
 
@@ -599,12 +591,8 @@ if ($clickOnceClean) {
     Write-Log "  [OK] Cleared: ClickOnce cache" "Green"
 }
 
-# PowerShell 4104 verification -- note: cannot re-query immediately after wevtutil cl
-# because this script's own execution generates new 4104 entries instantly.
-# Step 7 already documented and cleared all campaign entries found.
-# Verification is based on Step 7 outcome, not a re-query.
+# PowerShell 4104 verification
 if ($ps4104Hits.Count -gt 0) {
-    # Step 7 found and cleared entries -- mark as clean based on successful wevtutil cl
     $VerifyResults.Add("  [CLEAR]          PowerShell 4104 campaign entries (documented and log cleared in Step 7)")
     Write-Log "  [OK] Cleared: PowerShell 4104 campaign entries (Step 7 documented and cleared $($ps4104Hits.Count) entries)" "Green"
 } else {
@@ -652,7 +640,7 @@ $divider
   Prepared by : Pacific Northwest Computers
   Phone       : 360-624-7379
   Email       : jon@pnwcomputers.com
-  Tool ver    : 2.2
+  Tool ver    : 2.5.1
 $divider
 
   ##############################################################
@@ -663,7 +651,7 @@ $divider
   ##     jon@pnwcomputers.com                                 ##
   ##                                                          ##
   ##   Suggested subject line:                                ##
-  ##     Remediation Report - $env:COMPUTERNAME               ##
+  ##     Remediation Report - $env:COMPUTERNAME                ##
   ##                                                          ##
   ##############################################################
 
@@ -750,30 +738,30 @@ $divider
     IP: 15.204.131.77      (instance-sis2tc -- April 2026)
     IP: 147.28.146.148     (instance-fc5xev -- 2024)
     # instance-zayrhg (2023-2026)
-    IP: 15.204.48.24
-    IP: 15.204.48.31
-    IP: 15.204.48.34
-    IP: 15.204.43.162
-    IP: 139.178.68.80
-    IP: 139.178.89.196
-    IP: 139.178.91.96
-    IP: 147.75.70.32
+    IP:     15.204.48.24
+    IP:     15.204.48.31
+    IP:     15.204.48.34
+    IP:     15.204.43.162
+    IP:     139.178.68.80
+    IP:     139.178.89.196
+    IP:     139.178.91.96
+    IP:     147.75.70.32
     # instance-c7gab0 (2023-2025)
-    IP: 147.75.70.188
-    IP: 139.178.69.0
-    IP: 147.75.70.116
-    IP: 147.75.70.28
-    IP: 15.204.43.236
+    IP:     147.75.70.188
+    IP:     139.178.69.0
+    IP:     147.75.70.116
+    IP:     147.75.70.28
+    IP:     15.204.43.236
     # instance-xbirmk (2023-2024)
-    IP: 139.178.89.208
-    IP: 139.178.89.96
-    IP: 139.178.89.228
+    IP:     139.178.89.208
+    IP:     139.178.89.96
+    IP:     139.178.89.228
     # instance-wrnmil (2023)
-    IP: 147.28.129.152
+    IP:     147.28.129.152
     # instance-sis2tc rotation
-    IP: 147.75.50.76
+    IP:     147.75.50.76
     # SILENTCONNECT delivery infrastructure
-    IP: 86.38.225.59
+    IP:     86.38.225.59
     # Dynamic DNS
     Domain: gqpplgq2g.anondns.net
     Domain: instance-sis2tc-relay.screenconnect.com
@@ -782,6 +770,7 @@ $divider
     Domain: instance-c7gab0-relay.screenconnect.com
     Domain: instance-xbirmk-relay.screenconnect.com
     Domain: instance-wrnmil-relay.screenconnect.com
+    Domain: server-nix163ee578-relay.screenconnect.com
     Domain: bumptobabeco.top
     Domain: imansport.ir
     Domain: solpru.com
