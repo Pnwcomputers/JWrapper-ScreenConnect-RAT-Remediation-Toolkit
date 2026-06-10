@@ -7,7 +7,7 @@ title PNWC Intrusion Response Toolkit v2.5.1
 echo ================================================================
 echo   PNWC Intrusion Response Toolkit
 echo   JWrapper / ScreenConnect Campaign
-echo   Pacific Northwest Computers ^| 360-624-7379
+echo   Pacific Northwest Computers ^|  
 echo ================================================================
 echo.
 
@@ -65,7 +65,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0system_check.ps1"
 echo.
 echo ================================================================
 echo   Scan complete. A report file has been saved to this folder.
-echo   ** EMAIL the report to jon@pnwcomputers.com **
+echo   ** EMAIL the report to  support@pnwcomputers.com **
 echo   Run option [2] if threats were found and need to be removed.
 echo ================================================================
 pause
@@ -97,7 +97,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0fix.ps1"
 echo.
 echo ================================================================
 echo   Remediation complete. A report file has been saved.
-echo   ** EMAIL the report to jon@pnwcomputers.com **
+echo   ** EMAIL the report to  support@pnwcomputers.com **
 echo   REBOOT this machine, then run option [1] to verify clean.
 echo ================================================================
 pause
