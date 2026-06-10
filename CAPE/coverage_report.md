@@ -1,0 +1,569 @@
+# CAPE Windows Signatures - Host Reachability Report
+
+- Total signatures parsed: **614**
+- Statically host-scannable: **171** (28%)
+- Runtime-only (mutex/resident): **2**
+- Behavioral-only (need Sysmon/Sigma or re-detonation): **441**
+
+## Scannable artifacts available (signatures contributing each type)
+- registry: 84
+- file: 72
+- string: 18
+- argument: 8
+- network: 5
+- mutex: 2
+- commandline: 1
+
+## By CAPE category
+- evasion: 84
+- execution: 62
+- stealth: 56
+- network: 55
+- command: 47
+- bypass: 45
+- ransomware: 38
+- discovery: 37
+- persistence: 36
+- generic: 33
+- anti-vm: 32
+- office: 29
+- anti-sandbox: 24
+- fileless: 24
+- anti-av: 21
+- exploit: 21
+- injection: 21
+- encryption: 18
+- anti-debug: 15
+- infostealer: 14
+- wiper: 13
+- shellcode: 13
+- credential_access: 12
+- c2: 12
+- downloader: 11
+- credential_dumping: 10
+- lateral: 10
+- lateral_movement: 9
+- browser: 7
+- dns: 7
+- defense_evasion: 7
+- static: 7
+- dropper: 6
+- bootkit: 6
+- rootkit: 6
+- credentials: 6
+- macro: 6
+- banker: 5
+- malware: 5
+- virus: 5
+- martians: 5
+- anti-emulation: 4
+- clickfraud: 4
+- dotnet: 4
+- masquerading: 4
+- exploit_kit: 4
+- anti-analysis: 3
+- cryptomining: 3
+- location_discovery: 3
+- packer: 3
+- account: 3
+- unpacking: 3
+- ipc: 3
+- geofence: 2
+- rat: 2
+- phishing: 2
+- living-off-trusted-sites: 2
+- privilege_escalation: 2
+- system_discovery: 2
+- uac: 1
+- antivm: 1
+- bot: 1
+- ddos: 1
+- process hollowing: 1
+- side loading: 1
+- domain: 1
+- loader: 1
+- recon: 1
+- driver: 1
+- crypto: 1
+- lolbin: 1
+- keylogger: 1
+- memory scraping: 1
+- C&C: 1
+- syscall: 1
+- anti-edr: 1
+- unhooking: 1
+- obfuscation: 1
+- anti_debugging: 1
+- exfiltration: 1
+- command_and_control: 1
+- reconnaissance: 1
+
+## Top MITRE ATT&CK techniques referenced
+- T1112: 66
+- T1059: 62
+- T1497: 43
+- T1562: 38
+- T1057: 37
+- T1082: 33
+- T1083: 33
+- T1218: 32
+- T1055: 28
+- T1071: 25
+- T1562.001: 24
+- T1012: 22
+- T1518: 22
+- T1089: 21
+- T1137: 20
+- T1064: 20
+- T1003: 19
+- T1063: 18
+- T1518.001: 18
+- T1203: 17
+- T1032: 17
+- T1573: 17
+- T1059.001: 16
+- T1106: 16
+- T1486: 14
+
+## Behavioral-only signatures (route these to live telemetry)
+- Evade_Execute_Via_DeviceCredentialDeployment
+- Evade_Execution_Via_ASPNet_Compiler
+- Evade_Execution_Via_Filter_Manager_Control
+- Evade_Execution_Via_Intel_GFXDownloadWrapper
+- Execute_Binary_Via_OpenSSH
+- Execute_Binary_Via_PesterPSModule
+- Execute_Binary_Via_ScriptRunner
+- Execute_Binary_Via_VisualStudioLiveShare
+- Execute_Msiexec_Via_Explorer
+- Indirect_Command_Execution_Via_ConsoleWindowHost
+- Perform_Malicious_Activities_Via_Headless_Browser
+- Potential_Lateral_Movement_Via_SMBEXEC
+- Register_DLL_Via_CertOC
+- Register_DLL_Via_MSIEXEC
+- Register_DLL_Via_Odbcconf
+- Scriptlet_Proxy_Execution_Via_Pubprn
+- Suspicious_Execution_Via_MicrosoftExchangeTransportAgent
+- Suspicious_Scheduled_Task_Creation_Via_Masqueraded_XML_File
+- access_auto_logons_via_registry
+- access_boot_key_via_registry
+- access_windows_passwords_vault
+- accesses_office_username
+- accesses_recyclebin
+- add_windows_defender_exclusions
+- adds_admin_user
+- adds_user
+- adfind_domain_enumeration
+- alters_windows_utility
+- amsi_bypass_via_com_registry
+- amsi_enumeration
+- anomalous_deletefile
+- antiav_360_libs
+- antiav_ahnlab_libs
+- antiav_apioverride_libs
+- antiav_avast_libs
+- antiav_bitdefender_libs
+- antiav_bullguard_libs
+- antiav_emsisoft_libs
+- antiav_nthookengine_libs
+- antiav_qurb_libs
+- antiav_servicestop
+- antiav_whitespace
+- antidebug_addvectoredexceptionhandler
+- antidebug_checkremotedebuggerpresent
+- antidebug_debugactiveprocess
+- antidebug_gettickcount
+- antidebug_guardpages
+- antidebug_ntcreatethreadex
+- antidebug_ntsetinformationthread
+- antidebug_outputdebugstring
+- antidebug_setunhandledexceptionfilter
+- antiemu_wine_func
+- antisandbox_check_userdomain
+- antisandbox_foregroundwindows
+- antisandbox_mouse_hook
+- antisandbox_restart
+- antisandbox_sboxie_libs
+- antisandbox_sboxie_objects
+- antisandbox_sleep
+- antisandbox_suspend
+- antivm_checks_available_memory
+- antivm_directory_objects
+- antivm_display
+- antivm_generic_disk
+- antivm_generic_disk_setupapi
+- antivm_generic_scsi
+- antivm_generic_services
+- antivm_network_adapters
+- antivm_vbox_provname
+- antivm_vmware_events
+- apc_injection
+- api_spamming
+- api_uuidfromstringa
+- bcdedit_command
+- bootkit
+- browser_needed
+- browser_scanbox
+- bypass_chromium_protection
+- cape_extracted_content
+- captures_screenshot
+- changes_trust_center_settings
+- chromium_browser_extension_directory
+- clickfraud_cookies
+- clickfraud_volume
+- cmdline_forfiles_wildcard
+- cmdline_http_link
+- cmdline_long_string
+- cmdline_obfuscation
+- cmdline_process_discovery
+- cmdline_reversed_http_link
+- cmdline_switches
+- cmdline_terminate
+- comsvcs_credentialdump
+- copies_self
+- create_suspicious_lnk_files
+- creates_largekey
+- creates_nullvalue
+- creates_suspended_process
+- createtoolhelp32snapshot_module_enumeration
+- credential_access_via_windows_credential_history
+- credwiz_credentialaccess
+- critical_process
+- cryptomining_stratum_command
+- cryptopool_domains
+- cve_2014_6332
+- cve_2015_2419_js
+- cve_2016-0189
+- cve_2016_7200
+- dead_connect
+- dead_link
+- debugs_self
+- decompress_exe
+- decoy_document
+- decoy_image
+- deletes_consolehost_history
+- deletes_executed_files
+- deletes_self
+- deletes_shadow_copies
+- deletes_system_state_backup
+- dep_bypass
+- dep_disable
+- detect_virtualization_via_recent_files
+- direct_hdd_access
+- direct_syscall_evasion
+- disable_driver_via_blocklist
+- disable_driver_via_hvcidisallowedimages
+- disable_hypervisor_protected_code_integrity
+- disables_crashdumps
+- disables_mappeddrives_autodisconnect
+- disables_security
+- disables_spdy
+- disables_system_restore
+- disables_vba_trust_access
+- disables_wfp
+- disables_windows_defender
+- disables_windows_file_protection
+- discover_registry_mount_points
+- dll_archive_execution
+- dll_hijacking_via_microsoft_exchange
+- dll_hijacking_via_waas_medic_svc_com_typelib
+- dll_load_uncommon_file_types
+- dllload_suspicious_directory
+- document_script_exe_drop
+- domain_enumeration_commands
+- dotnet_csc_build
+- downloads_from_filehosting
+- driver_load
+- dropper
+- dump_lsa_via_windows_error_reporting
+- dynamic_function_loading
+- encrypted_ioc
+- enumerates_running_processes
+- escalate_privilege_via_named_pipe
+- escalate_privilege_via_ntlm_relay
+- etherhiding_smart_contract_call
+- excel4_macro_urls
+- exe_dropper_js
+- execute_binary_via_appvlp
+- execute_binary_via_internet_explorer_exporter
+- execute_binary_via_pcalua
+- execute_binary_via_pcalua
+- execute_binary_via_run_exe_helper_utility
+- execute_binary_via_ttdinject
+- execute_file_downloaded_via_openssh
+- execute_ps_via_syncappvpublishingserver
+- execute_remote_msi
+- execute_safe_mode_from_suspicious_process
+- execute_scripts_via_microsoft_management_console
+- execute_suspicious_powershell_via_runscripthelper
+- execute_suspicious_powershell_via_sqlps
+- execute_suspicious_processes_via_windows_mssql_service
+- executes_headless_browser
+- execution_from_self_extracting_archive
+- exploit_getbasekerneladdress
+- exploit_gethaldispatchtable
+- exploit_heapspray
+- explorer_http
+- firefox_disables_process_tab
+- folder_enumeration
+- generates_crypto_key
+- generic_metrics
+- generic_phish
+- get_clipboard_data
+- hardware_id_profiling
+- http_request
+- ie_martian_children
+- infostealer_browser
+- infostealer_browser_password
+- infostealer_keylog
+- injection_createremotethread
+- injection_explorer
+- injection_module_stomping_probing
+- injection_needextension
+- injection_network_traffic
+- injection_runpe
+- injection_rwx
+- injection_themeinitapihook
+- injection_write_exe_process
+- injection_write_process
+- install_kernel_driver_service
+- internet_dropper
+- interprocess_comms_mutex
+- interprocess_comms_named_pipe
+- interprocess_comms_shared_memory
+- ip_address_discovery_via_trusted_program
+- ipc_namedpipe
+- javascript_timer
+- js_phish
+- js_suspicious_redirect
+- kerberos_credential_access_via_rubeus
+- kernel_crypto_driver_abuse
+- legitimate_domain_abuse
+- lnk_archive_execution
+- load_dll_via_control_panel
+- long_commandline
+- lsa_tampering
+- lsass_credential_dumping
+- malformed_dll_loading
+- malicious_dynamic_function_loading
+- mass_data_encryption
+- mass_file_modification_access
+- mass_ransom_note_drop
+- mavinject_lolbin
+- mimics_agent
+- mimics_filetime
+- mimics_icon
+- mimikatz_modules
+- mmc_dll_script_load
+- mmc_dotnet_load
+- modify_zoneid_ads
+- mount_copy_to_webdav_share
+- mountpoints_volume_discovery
+- mouse_movement_detect
+- move_file_on_reboot
+- ms_office_cmd_rce
+- multiple_useragents
+- network_anomaly
+- network_bind
+- network_cnc_https_archive
+- network_cnc_https_free_webhosting
+- network_cnc_https_generic
+- network_cnc_https_interactsh
+- network_cnc_https_opensource
+- network_cnc_https_pastesite
+- network_cnc_https_payload
+- network_cnc_https_serviceinterface
+- network_cnc_https_socialmedia
+- network_cnc_https_telegram
+- network_cnc_https_temp_urldns
+- network_cnc_https_tempstorage
+- network_cnc_https_urlshortener
+- network_cnc_https_useragent
+- network_cnc_smtps_exfil
+- network_cnc_smtps_generic
+- network_connection_via_suspicious_process
+- network_dns_blockchain
+- network_dns_idn
+- network_dns_opennic
+- network_dns_reverse_proxy
+- network_dns_suspicious_querytype
+- network_dns_tunneling_request
+- network_document_file
+- network_downloader_exe
+- network_fake_useragent
+- office_anomalous_feature
+- office_code_page
+- office_com_load
+- office_cve2017_11882
+- office_cve2017_11882_network
+- office_cve_2021_40444
+- office_cve_2021_40444_m2
+- office_dde_command
+- office_dotnet_load
+- office_flash_load
+- office_macro
+- office_macro_autoexecution
+- office_macro_ioc
+- office_macro_malicious_prediction
+- office_macro_suspicious
+- office_martian_children
+- office_mshtml_load
+- office_postscript
+- office_suspicious_processes
+- office_vb_load
+- office_wmi_load
+- office_write_exe
+- overwrites_accessibility_utility
+- overwrites_admin_password
+- pendingfilerenameoperations_Operations
+- persistence_ads
+- persistence_registry_script
+- persistence_service
+- persistence_via_autodial_dll_registry
+- persists_dev_util
+- physical_drive_access
+- potential_WebShell_Via_ScreenConnectServer
+- potential_location_discovery_via_unusual_process
+- potential_overwrite_mbr
+- potential_protocol_tunneling_via_legit_utilities
+- potential_protocol_tunneling_via_qemu
+- powershell_command_suspicious
+- powershell_download
+- powershell_history_save_mod
+- powershell_network_connection
+- powershell_renamed
+- powershell_renamed_commandline
+- powershell_request
+- powershell_reversed
+- powershell_scriptblock_logging
+- powershell_variable_obfuscation
+- privilege_elevation_check
+- process_interest
+- process_needed
+- queries_computer_name
+- queries_keyboard_layout
+- queries_locale_api
+- queries_user_name
+- query_fips_reconnaissance
+- ransomware_attribute_stripping
+- ransomware_extension_hijack
+- ransomware_extensions_generic
+- ransomware_extensions_known
+- ransomware_file_modifications
+- ransomware_files
+- ransomware_iocp_asynchronous_encryption
+- read_file_raw_disk_access
+- reads_memory_remote_process
+- reads_password_database
+- reads_self
+- recon_beacon
+- recon_programs
+- registers_vectored_exception_handler
+- registry_credential_dumping
+- regsvr32_squiblydoo_dll_load
+- removes_windows_defender_updates
+- removes_zoneid_ads
+- resumethread_remote_process
+- rtf_anomaly_characterset
+- rtf_anomaly_version
+- rtf_aslr_bypass
+- rtf_embedded_content
+- rtf_embedded_office_file
+- rtf_exploit_static
+- scrcons_wmi_script_consumer
+- script_archive_execution
+- script_created_process
+- script_network_activity
+- script_tool_executed
+- section_mapping_injection
+- secure_login_phishing
+- securityxploded_modules
+- set_clipboard_data
+- sets_autoconfig_url
+- spawns_dev_util
+- spooler_svc_start
+- squiblydoo_bypass
+- squiblytwo_bypass
+- stack_pivot
+- stack_pivot_file_created
+- stack_pivot_process_create
+- stealth_childproc
+- stealth_file
+- stealth_system_procname
+- stealth_timeout
+- stealth_window
+- store_executable_registry
+- suspicious_browser_arguments
+- suspicious_certutil_use
+- suspicious_command_tools
+- suspicious_communication_trusted_site
+- suspicious_execution_via_dotnet_remoting
+- suspicious_iocontrol_codes
+- suspicious_java_execution_via_win_scripts
+- suspicious_js_script
+- suspicious_ntdll_disk_load
+- suspicious_ping_use
+- suspicious_tld
+- terminates_remote_process
+- territorial_disputes_sigs
+- thread_unbacked_memory
+- uac_bypass_cmstp
+- uac_bypass_delegateexecute_sdclt
+- uac_bypass_eventvwr
+- uac_bypass_windows_Backup
+- uiautomationcore_load
+- unbacked_api_resolution
+- unbacked_bind_shell
+- unbacked_com_instantiation
+- unbacked_crypto_operations
+- unbacked_delay_execution
+- unbacked_dns_resolution
+- unbacked_dotnet_execution
+- unbacked_exception_filter
+- unbacked_file_dropping
+- unbacked_library_load
+- unbacked_memory_apc_execution
+- unbacked_memory_network_connection
+- unbacked_memory_protection_alteration
+- unbacked_mutex_creation
+- unbacked_named_pipe_creation
+- unbacked_process_creation
+- unbacked_process_enumeration
+- unbacked_process_mitigation_alteration
+- unbacked_registry_modification
+- unbacked_service_manipulation
+- unbacked_syscall_execution
+- unbacked_token_manipulation
+- unbacked_useragent_retrieval
+- unbacked_veh_registration
+- unbacked_wmi_execution
+- user_enum
+- uses_Microsoft_HTML_Help_Executable
+- uses_adfind
+- uses_ms_protocol
+- uses_rdp_clip
+- uses_remote_desktop_session
+- uses_restart_manager_for_suspicious_activities
+- uses_windows_utilities
+- uses_windows_utilities_appcmd
+- uses_windows_utilities_cipher
+- uses_windows_utilities_clickonce
+- uses_windows_utilities_csvde_ldifde
+- uses_windows_utilities_curl
+- uses_windows_utilities_dsquery
+- uses_windows_utilities_esentutl
+- uses_windows_utilities_finger
+- uses_windows_utilities_mode
+- uses_windows_utilities_nltest
+- uses_windows_utilities_ntdsutil
+- uses_windows_utilities_setx
+- uses_windows_utilities_to_create_scheduled_task
+- uses_windows_utilities_xcopy
+- vaultcmd_credentialaccess
+- virus
+- web_shell_processes
+- win32_process_create
+- windows_defender_powershell
+- wiper_zeroedbytes
+- wmi_create_process
+- wmi_script_process
+- wmic_command_suspicious
