@@ -595,7 +595,3 @@ This IOC set is published and cross-referenced on AlienVault OTX. Related pulses
 *Pacific Northwest Computers — jon@pnwcomputers.com | 360-624-7379*
 *Last updated: June 2026*
 *Contributions welcome — see CONTRIBUTE.md*
-
-```
-
-```
