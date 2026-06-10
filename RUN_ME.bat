@@ -2,7 +2,7 @@
 :: Set UTF-8 codepage so PowerShell Unicode box-drawing characters render correctly
 chcp 65001 >nul 2>&1
 color 0B
-title PNWC Intrusion Response Toolkit v2.4.0
+title PNWC Intrusion Response Toolkit v2.5.1
 
 echo ================================================================
 echo   PNWC Intrusion Response Toolkit
