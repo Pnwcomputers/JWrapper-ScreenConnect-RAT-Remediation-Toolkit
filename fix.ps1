@@ -213,6 +213,47 @@ Get-ScheduledTask -ErrorAction SilentlyContinue |
         Unregister-ScheduledTask -TaskName $_.TaskName -Confirm:$false -ErrorAction SilentlyContinue
         Log-Removed "Scheduled Task: $($_.TaskName)"
     }
+# ScreenConnect Event Log and Tracing registry keys
+Write-Log "  [*] Removing ScreenConnect Event Log and Tracing registry keys..." "Yellow"
+$TracingPaths = @(
+    "HKLM:\SYSTEM\ControlSet001\Services\EventLog\Application\ScreenConnect*",
+    "HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Application\ScreenConnect*",
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Tracing\ScreenConnect_RASAPI32",
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Tracing\ScreenConnect_RASMANCS"
+)
+foreach ($path in $TracingPaths) {
+    Get-ChildItem -Path $(Split-Path $path -Parent) -ErrorAction SilentlyContinue | 
+        Where-Object { $_.Name -match (Split-Path $path -Leaf).Replace("*",".*") } | 
+        ForEach-Object {
+            try {
+                Remove-Item -Path $_.PSPath -Recurse -Force -ErrorAction Stop
+                Write-Log "  [OK] Removed registry key: $($_.Name)" "Green"
+                Log-Removed "Registry Tracing: $($_.Name)"
+            } catch {
+                Write-Log "  [!] Failed to remove $($_.Name)" "Red"
+                Log-Failed "Registry Tracing: $($_.Name)"
+            }
+        }
+}
+# SideBySide/ClickOnce deployment cache in Registry
+Write-Log "  [*] Purging ScreenConnect from SideBySide registry cache..." "Yellow"
+$userHives = Get-ChildItem -Path "Registry::HKEY_USERS" -ErrorAction SilentlyContinue
+foreach ($userHive in $userHives) {
+    $sxsPath = "$($userHive.PSPath)\SOFTWARE\Classes\Software\Microsoft\Windows\CurrentVersion\Deployment\SideBySide\2.0"
+    if (Test-Path $sxsPath) {
+        Get-ChildItem -Path $sxsPath -Recurse -ErrorAction SilentlyContinue | 
+            Where-Object { $_.Name -match "ScreenConnect" -or $_.Name -match "scre\.\." } |
+            ForEach-Object {
+                try {
+                    Remove-Item -Path $_.PSPath -Recurse -Force -ErrorAction Stop
+                    Write-Log "  [OK] Removed SideBySide key: $($_.Name)" "Green"
+                    Log-Removed "SideBySide Cache: $($_.Name)"
+                } catch {
+                    # Keys might be locked or already deleted
+                }
+            }
+    }
+}
 
 
 # ════════════════════════════════════════════════════════════
@@ -430,6 +471,29 @@ try {
 } catch {
     Write-Log "  [!] DNS flush failed: $($_.Exception.Message)" "Red"
     Log-Failed "DNS Cache flush"
+}
+# Sinkhole known malicious ScreenConnect domains
+Write-Log "  [*] Blocking known malicious ScreenConnect domains in hosts file..." "Yellow"
+$hostsFile = "$env:windir\System32\drivers\etc\hosts"
+$badDomains = @(
+    "furnwiz.screenconnect.com",
+    "furniturewizard.screenconnect.com",
+    "instance-fc5xev-relay.screenconnect.com",
+    "instance-sis2tc-relay.screenconnect.com"
+)
+foreach ($domain in $badDomains) {
+    if (-not (Select-String -Path $hostsFile -Pattern $domain -Quiet -ErrorAction SilentlyContinue)) {
+        try {
+            Add-Content -Path $hostsFile -Value "0.0.0.0`t$domain"
+            Write-Log "  [OK] Added host file block: $domain" "Green"
+            Log-Removed "Hosts File Block: $domain"
+        } catch {
+            Write-Log "  [!] Failed to block $domain in hosts file" "Red"
+            Log-Failed "Hosts File Block: $domain"
+        }
+    } else {
+        Write-Log "  [--] Host file block already exists: $domain" "DarkGray"
+    }
 }
 
 
