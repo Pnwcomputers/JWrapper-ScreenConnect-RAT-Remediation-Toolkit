@@ -476,10 +476,10 @@ try {
 Write-Log "  [*] Blocking known malicious ScreenConnect domains in hosts file..." "Yellow"
 $hostsFile = "$env:windir\System32\drivers\etc\hosts"
 $badDomains = @(
-    "furnwiz.screenconnect.com",
-    "furniturewizard.screenconnect.com",
     "instance-fc5xev-relay.screenconnect.com",
-    "instance-sis2tc-relay.screenconnect.com"
+    "instance-sis2tc-relay.screenconnect.com",
+    "server-nix163ee578-relay.screenconnect.com",
+    "server-nix163ee578-web.screenconnect.com"
 )
 foreach ($domain in $badDomains) {
     if (-not (Select-String -Path $hostsFile -Pattern $domain -Quiet -ErrorAction SilentlyContinue)) {
