@@ -39,6 +39,8 @@ This is a field-sourced document of known Indicators of Compromise (IOCs) associ
 | `ScreenConnect.WindowsAuthenticationPackage.dll` | Windows credential provider integration DLL |
 | `system.config` | ScreenConnect C2 relay config (contains relay hostname, resolved IP, and RSA-2048 auth key) |
 | `app.config` | ScreenConnect stealth config — `AutoConsentToBackstage=true`, all 13 visibility settings suppressed |
+| `server-nix163ee578-relay.screenconnect.com` | Confirmed actor-controlled C2 relay hostname variant (June 2026 update) |
+| `server-nix163ee578-web.screenconnect.com` | Confirmed actor-controlled C2 web management panel endpoint (June 2026 update) |
 
 ### Stage 2: JWrapper / SimpleHelp RAT
 
@@ -175,12 +177,14 @@ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remote Access
 
 | Address / Hostname | Resolved IP(s) | Port | Campaign Wave | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77`, `147.75.50.76` | `8041` | 2025–2026 | **Cross-victim confirmed — multiple victims 2 hrs apart; IP rotated** |
-| `instance-fc5xev-relay.screenconnect.com` | `147.28.146.148` | `8041` | 2024 | Earlier campaign wave |
-| `gqpplgq2g.anondns.net` | Dynamic | `8041` | March–April 2026 | Anonymous dynamic DNS — original documented case |
-| `instance-zayrhg-relay.screenconnect.com` | See table below | `8041` | 2023–2026 | Long-running relay — 3+ year persistence on one network |
-| `instance-c7gab0-relay.screenconnect.com` | See table below | `8041` | 2023–2025 | Secondary relay — ran concurrently with instance-zayrhg |
-| `instance-xbirmk-relay.screenconnect.com` | See table below | `8041` | 2023–2024 | Earliest observed relay — initial access vector |
+| `instance-sis2tc-relay.screenconnect.com` | `15.204.131.77`, `147.75.50.76` | `8041` | 2025–2026 | **Cross-victim confirmed — multiple victims 2 hrs apart; IP rotated**. |
+| `server-nix163ee578-relay.screenconnect.com` | See community pulses | `8041` | June 2026 | **New confirmed payload relay instance (v2.5.1 tracking upgrade)** |
+| `server-nix163ee578-web.screenconnect.com` | See community pulses | `443` | June 2026 | Active C2 web management landing endpoint |
+| `instance-fc5xev-relay.screenconnect.com` | `147.28.146.148` | `8041` | 2024 | Earlier campaign wave. |
+| `gqpplgq2g.anondns.net` | Dynamic | `8041` | March–April 2026 | Anonymous dynamic DNS — original documented case. |
+| `instance-zayrhg-relay.screenconnect.com` | See table below | `8041` | 2023–2026 | Long-running relay — 3+ year persistence on one network. |
+| `instance-c7gab0-relay.screenconnect.com` | See table below | `8041` | 2023–2025 | Secondary relay — ran concurrently with instance-zayrhg. |
+| `instance-xbirmk-relay.screenconnect.com` | See table below | `8041` | 2023–2024 | Earliest observed relay — initial access vector. |
 
 #### instance-zayrhg IP Rotation History (field-confirmed)
 
@@ -192,7 +196,7 @@ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remote Access
 | `147.75.70.32` | Dec 2024 |
 | `15.204.48.24` | Mar–Aug 2026 |
 | `15.204.48.31` | Dec 2025 |
-| `15.204.48.34` | Jan 2026 |
+| `15.204.48.34" | Jan 2026 |
 | `15.204.43.162` | Apr–May 2026 |
 
 #### instance-c7gab0 IP Rotation History (field-confirmed)
@@ -235,11 +239,9 @@ HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remote Access
 ### Stage 1 — ScreenConnect app.config Stealth Flags (Identical Across All Victims)
 
 ```xml
-AutoConsentToBackstage    = true    <!-- Attacker gets shell without any user prompt -->
-DisabledCommandNames      = ManageCredentials,VideoPause,VideoStop
+AutoConsentToBackstage    = true    DisabledCommandNames      = ManageCredentials,VideoPause,VideoStop
 AllowGuestInitiatedFileTransfer = false
-AlwaysDeleteSessionOnExit = true    <!-- Session artifacts purged on disconnect -->
-```
+AlwaysDeleteSessionOnExit = true    ```
 
 ### Stage 2 — JWrapper / SimpleHelp Gateways
 
@@ -255,17 +257,17 @@ AlwaysDeleteSessionOnExit = true    <!-- Session artifacts purged on disconnect 
 
 | Address / URL | Type | Notes |
 | :--- | :--- | :--- |
-| `bumptobabeco[.]top` | domain | ScreenConnect MSI download and C2 — registered Jan 25, 2026 via NameSilo |
-| `86.38.225.59` | IPv4 | bumptobabeco.top resolved IP — Lithuania, AS398465 rackdog llc |
-| `imansport[.]ir` | domain | VBScript lure delivery endpoint |
-| `solpru[.]com` | domain | DocuSign phishing lure page — confirms e-signature social engineering theme |
-| `checkfirst[.]net` | domain | Phishing email sender domain (Elastic Security Labs) |
-| `checkfirst[.]net.au` | domain | Phishing sender domain — AU variant; lower confidence |
-| `[http://imansport.ir/download_invitee.php](http://imansport.ir/download_invitee.php)` | URL | VBScript download endpoint |
-| `[http://solpru.com/process/docusign.html](http://solpru.com/process/docusign.html)` | URL | DocuSign impersonation lure page |
-| `[https://bumptobabeco.top/Bin/ScreenConnect.ClientSetup.msi?e=Access&y=Guest](https://bumptobabeco.top/Bin/ScreenConnect.ClientSetup.msi?e=Access&y=Guest)` | URL | Direct ScreenConnect MSI delivery URL — first seen serving March 19, 2026 |
-| Cloudflare R2 (`r2.dev`) | hosting | VBScript payload hosting |
-| Google Drive | hosting | C# second-stage payload staging |
+| `bumptobabeco[.]top` | domain | ScreenConnect MSI download and C2 — registered Jan 25, 2026 via NameSilo. |
+| `86.38.225.59` | IPv4 | bumptobabeco.top resolved IP — Lithuania, AS398465 rackdog llc. |
+| `imansport[.]ir` | domain | VBScript lure delivery endpoint. |
+| `solpru[.]com` | domain | DocuSign phishing lure page — confirms e-signature social engineering theme. |
+| `checkfirst[.]net` | domain | Phishing email sender domain (Elastic Security Labs). |
+| `checkfirst[.]net.au` | domain | Phishing sender domain — AU variant; lower confidence. |
+| `http://imansport.ir/download_invitee.php` | URL | VBScript download endpoint. |
+| `http://solpru.com/process/docusign.html` | URL | DocuSign impersonation lure page. |
+| `https://bumptobabeco.top/Bin/ScreenConnect.ClientSetup.msi?e=Access&y=Guest` | URL | Direct ScreenConnect MSI delivery URL — first seen serving March 19, 2026. |
+| Cloudflare R2 (`r2.dev`) | hosting | VBScript payload hosting. |
+| Google Drive | hosting | C# second-stage payload staging. |
 
 ### bumptobabeco.top C2 Server Profile
 
@@ -288,6 +290,17 @@ AlwaysDeleteSessionOnExit = true    <!-- Session artifacts purged on disconnect 
 | :--- | :--- | :--- |
 | `dan@checkfirst.net.au` | High | Confirmed phishing campaign sender (Elastic Security Labs) |
 | `advenwolf@proton.me` | Low | Co-listed with `dan@checkfirst.net.au` in OTX pulse 69cd44f1 — possible operator ProtonMail address or campaign registration email |
+
+| Property Type | Value / Identifier | Target Field Details |
+| :--- | :--- | :--- |
+| Session GUID | `e1547f6c-d35e-4a9b-af35-7c714f3fd2e1` | Associated with `instance-fc5xev-relay.screenconnect.com` |
+| Session GUID | `74c55011-6e7f-4f54-9f66-397773d3e59d` | Associated with `instance-sis2tc-relay.screenconnect.com` |
+
+### Observed Client Engine Versions in SideBySide Executions
+* `22.4.7.8154`
+* `23.9.10.8817`
+* `24.4.5.9139`
+* `26.1.24.9579`
 
 ### Local IPC Port
 
@@ -346,28 +359,20 @@ SG_3243431771723114121
 
 | Token | Payload Version | Notes |
 | :--- | :--- | :--- |
-| `27fa83f1ad328157` | v25.2.4.9229 / v25.x | April 2026 campaign wave — present across all confirmed 2026 victims |
-| `420d02d3849b7992` | v25.2.4.9229 / v25.x | Core/Windows DLL token — same build as above |
-| `1eba6b14258ee2ac` | v19.x (2025 payload) | Server and workstations — 2025 upgrade wave |
-| `4b14c015c87c1ad8` | v18.x (intermediate) | Found on DESKTOP-8HF24LF — between v17-18 and v19 builds |
-| `25b0fbb6ef7eb094` | v17.x–v18.x | Early campaign payload — 2021–2024 |
-| `b15b0581876c57b7` | v15.x | Oldest observed payload — 2021–2022 |
+| `27fa83f1ad328157` | v25.2.4.9229 / v25.x | April 2026 campaign wave — present across all confirmed 2026 victims. |
+| `420d02d3849b7992` | v25.2.4.9229 / v25.x | Core/Windows DLL token — same build as above. |
+| `1eba6b14258ee2ac` | v19.x (2025 payload) | Server and workstations — 2025 upgrade wave. |
+| `4b14c015c87c1ad8` | v18.x (intermediate) | Found on DESKTOP-8HF24LF — between v17-18 and v19 builds. |
+| `25b0fbb6ef7eb094` | v17.x–v18.x | Early campaign payload — 2021–2024. |
+| `b15b0581876c57b7` | v15.x | Oldest observed payload — 2021–2022. |
 
-### Confirmed ScreenConnect Session / Instance Identifiers (From Field Registry Data)
+### Confirmed ScreenConnect Instance IDs
 
-| Property Type | Value / Identifier | Target Field Details |
+| Instance ID | Relay | Notes |
 | :--- | :--- | :--- |
-| Session GUID | `e1547f6c-d35e-4a9b-af35-7c714f3fd2e1` | Associated with `instance-fc5xev-relay.screenconnect.com` |
-| Session GUID | `74c55011-6e7f-4f54-9f66-397773d3e59d` | Associated with `instance-sis2tc-relay.screenconnect.com` |
-| Instance ID | `3d3b2f272279de02` | Confirmed campaign — WindowsAuthenticationPackage.dll hash match |
-| Instance ID | `fd116df82d4badf8` | Confirmed campaign — WindowsAuthenticationPackage.dll hash match |
-| Instance ID | `e79a68f16cd026b7` | Unknown — MANAGER machine dedicated instance |
-
-### Observed Client Engine Versions in SideBySide Executions
-* `22.4.7.8154`
-* `23.9.10.8817`
-* `24.4.5.9139`
-* `26.1.24.9579`
+| `3d3b2f272279de02` | `instance-sis2tc` | Confirmed campaign — WindowsAuthenticationPackage.dll hash match. |
+| `fd116df82d4badf8` | `instance-c7gab0` | Confirmed campaign — WindowsAuthenticationPackage.dll hash match. |
+| `e79a68f16cd026b7` | Unknown | MANAGER machine dedicated instance. |
 
 ### Additional Field-Verified SHA-256 Hashes (3d3b2f27 build)
 
@@ -577,6 +582,26 @@ Additional SHA1 from OTX pulse 69bd45 (SILENTCONNECT loader variant):
 
 ---
 
+## 📚 External Research & Attribution
+
+This campaign has been independently documented by multiple threat intelligence organizations. Recent reporting from Proofpoint heavily correlates this exact TTP chain (VBScript -> ScreenConnect -> SimpleHelp) with a financially motivated threat actor specializing in **Freight Fraud and Cargo Theft**.
+
+| Source | Publication | Campaign Name |
+| :--- | :--- | :--- |
+| Proofpoint | April 16, 2026 | [Cargo Theft Actor / Freight Fraud Playbook](https://www.proofpoint.com/us/blog/threat-insight/beyond-breach-inside-cargo-theft-actors-post-compromise-playbook) |
+| Elastic Security Labs | March 19, 2026 | SILENTCONNECT |
+| Microsoft Security Blog | March 3, 2026 | Signed malware / TrustConnect RMM variant |
+| Microsoft Security Blog | May 26, 2026 | ScreenConnect / cryptojacking ScreenConnect abuse |
+| BleepingComputer / G DATA | June 25, 2025 | Authenticode stuffing / EvilConwi |
+| OTX AlienVault (pnwcomputers) | May 2026 | [JWrapper/ScreenConnect Dual-Stage RAT — SILENTCONNECT / Medusa IAB Variant](https://otx.alienvault.com/pulse/6a18e9c64ab0a08568d345cd) |
+
+**The Proofpoint Cargo Theft Connection:**
+The technical analysis provided by Proofpoint directly mirrors the field data collected in this repository. Proofpoint observed the actor utilizing VBScript payloads to drop ScreenConnect while displaying a "decoy broker-carrier agreement," followed by the deployment of secondary RMM tools including SimpleHelp. 
+
+Furthermore, Proofpoint noted the actor's use of a "previously unknown third-party signing-as-a-service capability," explaining the valid DigiCert Authenticode certificates observed on the NSIS variants in this campaign. The campaign profile ID `Transport office101` recovered from the JWrapper logs in this repository aligns perfectly with Proofpoint's assessment that this actor heavily targets transportation, logistics, and load board platforms for physical cargo theft and financial fraud before potentially brokering the access to ransomware operators.
+
+---
+
 ## 🔗 OTX Threat Intelligence References
 
 This IOC set is published and cross-referenced on AlienVault OTX. Related pulses confirming these indicators:
@@ -584,14 +609,18 @@ This IOC set is published and cross-referenced on AlienVault OTX. Related pulses
 | Pulse ID | Author | Description |
 | :--- | :--- | :--- |
 | [6a18e9c64ab0a08568d345cd](https://otx.alienvault.com/pulse/6a18e9c64ab0a08568d345cd) | pnwcomputers | Field-sourced IOCs — this repository (20 indicators, TLP:Amber) |
-| [69bd45393fac7e92bd363cad](https://otx.alienvault.com/pulse/69bd45393fac7e92bd363cad) | celestre | IOC — SILENTCONNECT (Elastic Security Labs direct) |
-| [69c227a65f707b407e32de6c](https://otx.alienvault.com/pulse/69c227a65f707b407e32de6c) | CyberHunter_NL | SILENTCONNECT hash cross-reference |
+| [6570a857cae685fce7f5231e](https://otx.alienvault.com/pulse/6570a857cae685fce7f5231e) | (Community) | ScreenConnect server infrastructure core tracking pulse |
 | [69af7bd5ef2e0695343cd117](https://otx.alienvault.com/pulse/69af7bd5ef2e0695343cd117) | — | RouterHosting/Cloudzy infrastructure (partial overlap) |
+| [69bbd761dff7b64814123d3f](https://otx.alienvault.com/pulse/69bbd761dff7b64814123d3f) | (Community) | Cargo Theft / ScreenConnect threat actor infrastructure tracking pulse |
+| [69bd45393fac7e92bd363cad](https://otx.alienvault.com/pulse/69bd45393fac7e92bd363cad) | celestre | IOC — SILENTCONNECT (Elastic Security Labs direct) |
+| [69c227a65f707b407e32de6c](https://otx.alienvault.com/pulse/69c227a65f707b407e32de6c) | CyberHunter_NL | SILENTCONNECT hash cross-reference Table |
 
-> The 7 related pulses auto-linked by OTX confirm these IOCs are corroborated by the broader threat intel community. The `bumptobabeco.top` domain has 4 independent related pulses across OTX.
+> The related pulses auto-linked by OTX confirm these IOCs are corroborated by the broader threat intel community. The `bumptobabeco.top` domain has independent related pulses across OTX.
+
 ---
 
 *All IOCs verified from live field incident data unless otherwise noted.*
 *Pacific Northwest Computers — jon@pnwcomputers.com | 360-624-7379*
 *Last updated: June 2026*
 *Contributions welcome — see CONTRIBUTE.md*
+```
