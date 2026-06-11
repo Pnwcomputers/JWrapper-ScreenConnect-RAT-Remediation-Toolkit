@@ -64,18 +64,33 @@ function Remove-LockedPath {
 }
 
 # ── Banner ────────────────────────────────────────────────────────────────────
+# Pure-ASCII banner. Avoids UTF-8 box-drawing chars so this renders correctly
+# regardless of console codepage (some PowerShell 5.1 / Windows console host
+# combinations ignore chcp 65001 and decode output as cp1252, producing mojibake).
+$host.UI.RawUI.WindowTitle = "PNWC Remediation Tool v2.4.0"
+
 Clear-Host
-Write-Log ("=" * 70) "DarkCyan"
-Write-Log "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " "Cyan"
-Write-Log "   Pacific Northwest Computers  |  support@pnwcomputers.com        " "Gray"
-Write-Log "   v2.5.1 -- SILENTCONNECT / Medusa IAB variant                " "DarkGray"
-Write-Log ("=" * 70) "DarkCyan"
-Write-Log ""
-Write-Log "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" "Gray"
-Write-Log "  Computer : $env:COMPUTERNAME" "Gray"
-Write-Log "  Log file : $ReportFile" "Gray"
-Write-Log ""
-$ActionLog.Add("PNWC Remediation Tool v2.5.1 -- JWrapper/ScreenConnect (SILENTCONNECT)")
+Write-Host ""
+Write-Host "  ######   ##  ##   ##    ##   ######" -ForegroundColor Cyan
+Write-Host "  ##  ##   ### ##   ##    ##   ##    " -ForegroundColor Cyan
+Write-Host "  ######   ######   ## ## ##   ##    " -ForegroundColor Cyan
+Write-Host "  ##       ## ###   ########   ##    " -ForegroundColor Cyan
+Write-Host "  ##       ##  ##   ##    ##   ######" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Pacific Northwest Computers" -ForegroundColor White
+Write-Host "  Malware Remediation Toolkit" -ForegroundColor DarkGray
+Write-Host ""
+Write-Host ("=" * 70) -ForegroundColor DarkCyan
+Write-Host "   PNWC Remediation Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
+Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
+Write-Host "   v2.5.1 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
+Write-Host ("=" * 70) -ForegroundColor DarkCyan
+Write-Host ""
+Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
+Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
+Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
+Write-Host ""
+$ActionLog.Add("PNWC Remediation Tool v2.5.1-- JWrapper/ScreenConnect (SILENTCONNECT)")
 $ActionLog.Add("Started : $(Get-Date)")
 $ActionLog.Add("Computer: $env:COMPUTERNAME")
 $ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
