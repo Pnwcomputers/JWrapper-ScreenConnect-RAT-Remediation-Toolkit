@@ -17,11 +17,13 @@ This specific attack chain is actively utilized by Initial Access Brokers (IABs)
 
 | File | Description |
 | :--- | :--- |
+| `CAPE` | A host-side detection utility that hunts Windows for the durable artifacts of CAPE Sandbox behavioral signatures. |
 | `RUN_ME.bat` | Launcher with admin check and interactive menu. Start here. |
 | `system_check.ps1` | **Read-only** pre-remediation detection scanner. Run this first. |
 | `Fix.ps1` | Active remediation script. Removes all known artifacts. |
 | `indicators.md` | Full IOC data sheet (hashes, paths, registry keys, network, TTPs). |
 | `CONTRIBUTE.md` | Guidelines for submitting new IOCs from the field. |
+
 
 ---
 
