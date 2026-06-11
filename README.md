@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="/assets/jwrapper.jpg" alt="PNWC Ultimate Cybersecurity Master Guide" width="600"/>
+</p>
+
 # JWrapper & ScreenConnect Remediation Toolkit
 ## *(Medusa IAB Variant — SILENTCONNECT Campaign)*
 
