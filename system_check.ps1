@@ -62,19 +62,38 @@ function Write-Hit {
 function Write-Clean { param([string]$L); Write-Log "  [OK] $L" "DarkGreen" }
 
 # ── Banner ────────────────────────────────────────────────────────────────────
+# Pure-ASCII banner. Avoids UTF-8 box-drawing chars so this renders correctly
+# regardless of console codepage (some PowerShell 5.1 / Windows console host
+# combinations ignore chcp 65001 and decode output as cp1252, producing mojibake).
+$host.UI.RawUI.WindowTitle = "PNWC Detection Tool v2.5.1"
+
 Clear-Host
-Write-Log ("=" * 70) "DarkCyan"
-Write-Log "   PNWC Detection Checker - JWrapper / ScreenConnect Campaign  " "Cyan"
-Write-Log "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " "Gray"
-Write-Log "   READ-ONLY -- This script makes NO changes to the system     " "Green"
-Write-Log "   v2.5.1 -- SILENTCONNECT / Medusa IAB variant                " "DarkGray"
-Write-Log ("=" * 70) "DarkCyan"
-Write-Log ""
-Write-Log "  Scan started : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" "Gray"
-Write-Log "  Computer     : $env:COMPUTERNAME" "Gray"
-Write-Log "  Running as   : $([Security.Principal.WindowsIdentity]::GetCurrent().Name)" "Gray"
-Write-Log "  Report file  : $ReportFile" "Gray"
-Write-Log ""
+Write-Host ""
+Write-Host "  ######   ##  ##   ##    ##   ######" -ForegroundColor Cyan
+Write-Host "  ##  ##   ### ##   ##    ##   ##    " -ForegroundColor Cyan
+Write-Host "  ######   ######   ## ## ##   ##    " -ForegroundColor Cyan
+Write-Host "  ##       ## ###   ########   ##    " -ForegroundColor Cyan
+Write-Host "  ##       ##  ##   ##    ##   ######" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Pacific Northwest Computers" -ForegroundColor White
+Write-Host "  Malware Detection Toolkit" -ForegroundColor DarkGray
+Write-Host ""
+Write-Host ("=" * 70) -ForegroundColor DarkCyan
+Write-Host "   PNWC Detection Tool - JWrapper / ScreenConnect Intrusion  " -ForegroundColor Cyan
+Write-Host "   Pacific Northwest Computers  |  jon@pnwcomputers.com        " -ForegroundColor Gray
+Write-Host "   v2.5.1 -- SILENTCONNECT / Medusa IAB variant                  " -ForegroundColor DarkGray
+Write-Host ("=" * 70) -ForegroundColor DarkCyan
+Write-Host ""
+Write-Host "  Started  : $(Get-Date -Format 'dddd MMMM dd yyyy  HH:mm:ss')" -ForegroundColor Gray
+Write-Host "  Computer : $env:COMPUTERNAME" -ForegroundColor Gray
+Write-Host "  Log file : $ReportFile" -ForegroundColor Gray
+Write-Host ""
+$ActionLog.Add("PNWC Detection Tool v2.5.1 -- JWrapper/ScreenConnect (SILENTCONNECT)")
+$ActionLog.Add("Started : $(Get-Date)")
+$ActionLog.Add("Computer: $env:COMPUTERNAME")
+$ActionLog.Add("OS      : $((Get-WmiObject Win32_OperatingSystem).Caption)")
+$ActionLog.Add("Operator: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)")
+$ActionLog.Add(("=" * 70))
 
 
 # ════════════════════════════════════════════════════════════
